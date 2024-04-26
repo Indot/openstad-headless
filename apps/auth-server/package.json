@@ -22,7 +22,7 @@
     "express-session": "1.17.2",
     "express-slow-down": "^1.4.0",
     "express-validator": "^7.0.1",
-    "fast-csv": "^4.3.6",
+    "fast-csv": "^5.0.1",
     "hat": "0.0.3",
     "jsonwebtoken": "^9.0.0",
     "less": "^3.12.2",
