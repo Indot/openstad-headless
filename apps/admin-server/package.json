@@ -57,7 +57,7 @@
     "react": "18.2.0",
     "react-csv": "^2.2.2",
     "react-day-picker": "^8.8.2",
-    "react-dom": "18.2.0",
+    "react-dom": "18.3.1",
     "react-hook-form": "^7.46.1",
     "react-hot-toast": "^2.4.1",
     "react-leaflet": "^4.2.1",
@@ -78,7 +78,7 @@
     "@types/node": "20.5.0",
     "@types/react": "18.2.25",
     "@types/react-csv": "^1.1.8",
-    "@types/react-dom": "18.2.7",
+    "@types/react-dom": "18.3.0",
     "pino-pretty": "^10.2.0",
     "typescript": "5.1.6"
   }
