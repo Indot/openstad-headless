@@ -21,7 +21,7 @@
     "build-packages": "node ./scripts/build-packages.js"
   },
   "dependencies": {
-    "@kubernetes/client-node": "^0.18.1",
+    "@kubernetes/client-node": "^0.21.0",
     "@openstad-headless/agenda": "file:../../packages/agenda",
     "@openstad-headless/comments": "file:../../packages/comments",
     "@openstad-headless/counter": "file:../../packages/counter",
