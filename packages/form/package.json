@@ -18,7 +18,7 @@
     "filepond-plugin-image-exif-orientation": "^1.0.11",
     "filepond-plugin-image-preview": "^4.6.12",
     "leaflet": "^1.9.4",
-    "react": "^18.2.0",
+    "react": "^18.3.1",
     "react-dom": "^18.2.0",
     "react-filepond": "^7.1.2",
     "react-leaflet": "^4.2.1",
@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^12.3.4",
-    "@types/react": "^18.2.78",
+    "@types/react": "^18.3.2",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
