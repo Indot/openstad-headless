@@ -28,7 +28,7 @@
     "@utrecht/component-library-css": "^3.0.1-alpha.18",
     "@utrecht/component-library-react": "^3.0.1-alpha.18",
     "@utrecht/design-tokens": "^1.0.0-alpha.631",
-    "eslint": "^8.45.0",
+    "eslint": "^9.3.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
     "typescript": "^5.0.2",
