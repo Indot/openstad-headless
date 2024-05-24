@@ -17,7 +17,7 @@
     "@utrecht/component-library-css": "^3.0.1-alpha.18",
     "@utrecht/component-library-react": "^3.0.1-alpha.18",
     "@utrecht/design-tokens": "^1.0.0-alpha.631",
-    "react": "^18.2.0",
+    "react": "^18.3.1",
     "react-dom": "^18.2.0",
     "remixicon": "^3.5.0",
     "swr": "^2.2.4"
@@ -25,7 +25,7 @@
   "devDependencies": {
     "@next/eslint-plugin-next": "^12.3.4",
     "eslint-config-custom": "*",
-    "@types/react": "^18.2.78",
+    "@types/react": "^18.3.3",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
