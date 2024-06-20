@@ -27,7 +27,7 @@
     "@openstad-headless/stem-begroot": "file:../../packages/stem-begroot",
     "@openstad-headless/types": "file:../../packages/types",
     "@radix-ui/react-checkbox": "^1.0.4",
-    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-dialog": "^1.1.0",
     "@radix-ui/react-dropdown-menu": "^2.0.5",
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-popover": "^1.0.6",
