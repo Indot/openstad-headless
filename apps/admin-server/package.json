@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.3.1",
+    "@hookform/resolvers": "^3.9.0",
     "@openstad-headless/agenda": "file:../../packages/agenda",
     "@openstad-headless/comments": "file:../../packages/comments",
     "@openstad-headless/counter": "file:../../packages/counter",
