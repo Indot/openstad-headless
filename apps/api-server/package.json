@@ -78,7 +78,7 @@
     "eslint-config-airbnb": "^18.2.1",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-sonarjs": "^0.10.0",
     "jest": "^27.5.1",
     "npm-commands": "^1.1.0",
