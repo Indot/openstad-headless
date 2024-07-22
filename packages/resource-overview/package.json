@@ -16,7 +16,7 @@
     "@openstad-headless/ui": "file:../ui",
     "@types/nunjucks": "^3.2.6",
     "@utrecht/component-library-css": "^3.0.1-alpha.18",
-    "@utrecht/component-library-react": "^3.0.1-alpha.18",
+    "@utrecht/component-library-react": "^4.2.0",
     "@utrecht/design-tokens": "^1.0.0-alpha.631",
     "copy": "^0.3.2",
     "nunjucks": "^3.2.4",

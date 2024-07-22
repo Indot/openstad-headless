@@ -15,7 +15,7 @@
     "@openstad-headless/ui": "file:../ui",
     "@rooks/use-interval": "^4.11.2",
     "@utrecht/component-library-css": "^3.0.1-alpha.18",
-    "@utrecht/component-library-react": "^3.0.1-alpha.18",
+    "@utrecht/component-library-react": "^4.2.0",
     "@utrecht/design-tokens": "^1.0.0-alpha.631",
     "date-fns": "2.30.0",
     "date-fns-tz": "^2.0.0",
