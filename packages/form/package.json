@@ -12,7 +12,7 @@
   "dependencies": {
     "@openstad-headless/data-store": "file:../data-store",
     "@openstad-headless/ui": "file:../ui",
-    "@utrecht/component-library-css": "^2.0.0",
+    "@utrecht/component-library-css": "^4.1.0",
     "filepond": "^4.30.6",
     "filepond-plugin-file-validate-type": "^1.2.9",
     "filepond-plugin-image-exif-orientation": "^1.0.11",
