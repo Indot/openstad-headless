@@ -14,7 +14,7 @@
     "@openstad-headless/types":"file:../types",
     "@openstad-headless/data-store": "file:../data-store",
     "@openstad-headless/lib": "file:../lib",
-    "@utrecht/component-library-css": "^3.0.1-alpha.18",
+    "@utrecht/component-library-css": "^4.1.0",
     "@utrecht/component-library-react": "^3.0.1-alpha.18",
     "@utrecht/design-tokens": "^1.0.0-alpha.631",
     "react": "^18.2.0",
