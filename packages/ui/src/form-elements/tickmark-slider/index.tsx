@@ -1,6 +1,7 @@
-import { FieldsetLegend, FormFieldDescription } from '@utrecht/component-library-react';
+import {FormLabel, FormFieldDescription, Paragraph, AccordionProvider} from '@utrecht/component-library-react';
 import React, { FC, useState } from 'react';
 import { Spacer } from '@openstad-headless/ui/src';
+import './style.css';
 
 export type TickmarkSliderProps = {
     index: number;
@@ -15,6 +16,11 @@ export type TickmarkSliderProps = {
     disabled?: boolean;
     onChange?: (e: { name: string, value: string | Record<number, never> | [] }) => void;
     type?: string;
+    showSmileys?: boolean;
+    showMoreInfo?: boolean;
+    moreInfoButton?: string;
+    moreInfoContent?: string;
+    infoImage?: string;
 }
 
 const TickmarkSlider: FC<TickmarkSliderProps> = ({
@@ -22,6 +28,7 @@ const TickmarkSlider: FC<TickmarkSliderProps> = ({
     description = '',
     fieldOptions = [],
     fieldRequired = false,
+    showSmileys = false,
     fieldKey,
     imageSrc = '',
     imageAlt = '',
@@ -29,27 +36,58 @@ const TickmarkSlider: FC<TickmarkSliderProps> = ({
     onChange,
     index,
     disabled = false,
+    showMoreInfo = false,
+    moreInfoButton = 'Meer informatie',
+    moreInfoContent = '',
+   infoImage = '',
 }) => {
     const defaultValue = Math.ceil(fieldOptions.length / 2).toString();
     const [value, setValue] = useState<string>(defaultValue);
 
     const maxCharacters = fieldOptions.length > 0 ? fieldOptions.length.toString() : "1";
 
+    class HtmlContent extends React.Component<{ html: any }> {
+        render() {
+            let {html} = this.props;
+            return <div dangerouslySetInnerHTML={{__html: html}}/>;
+        }
+    }
+
     return (
         <div className="a-b-slider-container">
-            {title && (
-                <FieldsetLegend>
-                    {title}
-                </FieldsetLegend>
-            )}
+            <Paragraph className="utrecht-form-field__label">
+                <FormLabel htmlFor={`a-to-b-range--${index}`}>{title}</FormLabel>
+            </Paragraph>
             {description &&
-                    <>
-                    <FormFieldDescription>
-                        {description}
-                    </FormFieldDescription>
+                <>
+                    <FormFieldDescription dangerouslySetInnerHTML={{__html: description}} />
                     <Spacer size={.5} />
                 </>
             }
+
+            {showMoreInfo && (
+                <>
+                    <AccordionProvider
+                        sections={[
+                            {
+                                headingLevel: 3,
+                                body: <HtmlContent html={moreInfoContent} />,
+                                expanded: undefined,
+                                label: moreInfoButton,
+                            }
+                        ]}
+                    />
+                    <Spacer size={1.5} />
+                </>
+            )}
+
+            {infoImage && (
+                <figure className="info-image-container">
+                    <img src={infoImage} alt=""/>
+                    <Spacer size={.5} />
+                </figure>
+            )}
+
             {imageSrc && (
                 <figure>
                     <img src={imageSrc} alt={imageAlt} />
@@ -64,7 +102,6 @@ const TickmarkSlider: FC<TickmarkSliderProps> = ({
                 max={maxCharacters}
                 value={value}
                 step="1"
-                list={`form-field-tickmarks-${index}`}
                 id={`a-to-b-range--${index}`}
                 name={fieldKey}
                 required={fieldRequired}
@@ -77,21 +114,13 @@ const TickmarkSlider: FC<TickmarkSliderProps> = ({
                         });
                     }
                 }}
-                aria-label={`Selecteer een waarde tussen 1 en ${fieldOptions.length}`}
                 disabled={disabled}
             />
-            <datalist id={`form-field-tickmarks-${index}`}>
+            <div className={`range-slider-labels ${showSmileys && 'smiley-scale'}`} aria-hidden="true">
                 {fieldOptions.map((option, key) => (
-                    <option key={key} value={option.value}>
+                    <span key={key} className={value === option.value ? 'active' : ''}>
                         {option.label}
-                    </option>
-                ))}
-            </datalist>
-            <div className="range-slider-labels">
-                {fieldOptions.map((option, key) => (
-                    <label key={key} htmlFor={`a-to-b-range--${index}`} className={value === option.value ? 'active' : ''}>
-                        {option.label}
-                    </label>
+                    </span>
                 ))}
             </div>
         </div>

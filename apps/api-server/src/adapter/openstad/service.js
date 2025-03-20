@@ -13,12 +13,12 @@ service.fetchUserData = async function fetchUserData({ authConfig, userId, email
   let headers = {};
   if ( userId ) {
     path = `/api/admin/user/${userId}?client_id=${authConfig.clientId}`;
-	  headers = { Authorization: `Basic ${new Buffer(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}` };
+	  headers = { Authorization: `Basic ${Buffer.from(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}` };
   }
 
   if ( email  ) {
     path = `/api/admin/users?email=${encodeURIComponent(email)}`;
-	  headers = { Authorization: `Basic ${new Buffer(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}` };
+	  headers = { Authorization: `Basic ${Buffer.from(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}` };
   }
 
   if ( accessToken ) {
@@ -81,7 +81,7 @@ service.createUser = async function({ authConfig, userData = {} }) {
 
     let response = await fetch(url, {
 	    headers: {
-        Authorization: `Basic ${new Buffer(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
         'Content-type': 'application/json',
       },
       method: 'post',
@@ -107,6 +107,28 @@ service.createUser = async function({ authConfig, userData = {} }) {
 service.updateUser = async function({ authConfig, userData = {} }) {
 
   // TODO: unmap userData
+  const unmapUserData = (userData) => {
+    // make copy
+    let unmapped = JSON.parse(JSON.stringify(userData));
+    if(typeof unmapped?.address !== 'undefined' && unmapped?.address !== null) {
+      // Check if we can split the address into street and number
+      const addressParts = unmapped.address.split(' ');
+      if(addressParts.length > 1) {
+        unmapped.streetName = addressParts.slice(0, -1).join(' ');
+        unmapped.houseNumber = addressParts.slice(-1).join(' ');
+      }else{
+        unmapped.streetName = userData.address;
+      }
+
+      // Check displayName (nickName)
+      if(typeof unmapped?.displayName !== 'undefined' && unmapped?.displayName !== null) {
+        unmapped.nickName = unmapped.displayName;
+      }
+    }
+    return unmapped
+  }
+
+  userData = unmapUserData(userData);
 
   if (!(userData && userData.id)) throw new Error('No user id found')
 
@@ -125,7 +147,7 @@ service.updateUser = async function({ authConfig, userData = {} }) {
 
     let response = await fetch(url, {
 	    headers: {
-        Authorization: `Basic ${new Buffer(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
         'Content-type': 'application/json',
       },
       method: 'post',
@@ -159,7 +181,7 @@ service.deleteUser = async function({ authConfig, userData = {} }) {
 
     let response = await fetch(url, {
 	    headers: {
-        Authorization: `Basic ${new Buffer(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
         'Content-type': 'application/json',
       },
       method: 'post',
@@ -189,7 +211,7 @@ service.fetchClient = async function({ authConfig, project }) {
     let url = `${authConfig.serverUrlInternal}/api/admin/client/${clientId}`;
     let response = await fetch(url, {
 	    headers: {
-        Authorization: `Basic ${new Buffer(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
       },
     })
     if (!response.ok) {
@@ -235,7 +257,7 @@ service.createClient = async function({ authConfig, project }) {
     let url = `${adminAuthConfig.serverUrlInternal}/api/admin/client`;
     let response = await fetch(url, {
 	    headers: {
-        Authorization: `Basic ${new Buffer(`${adminAuthConfig.clientId}:${adminAuthConfig.clientSecret}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${adminAuthConfig.clientId}:${adminAuthConfig.clientSecret}`).toString('base64')}`,
         'Content-type': 'application/json',
       },
       method: 'post',
@@ -265,7 +287,6 @@ service.createClient = async function({ authConfig, project }) {
 }
 
 service.updateClient = async function({ authConfig, project }) {
-
   let clientId = authConfig.clientId;
   if (!clientId) {
     console.log('OpenStad.service.updateClient: clientId not found')
@@ -273,9 +294,7 @@ service.updateClient = async function({ authConfig, project }) {
   }
 
   try {
-
     let client = await service.fetchClient({ authConfig, project });
-
     let authTypes = authConfig.authTypes || client.authTypes;
     if (!Array.isArray(authTypes)) authTypes = [ authTypes ];
 
@@ -301,18 +320,11 @@ service.updateClient = async function({ authConfig, project }) {
         canCreateNewUsers: project.config.users?.canCreateNewUsers
       },
       styling: {
-        logo: project.config.styling?.logo,
-        favicon: project.config.styling?.favicon,
+        logo: authConfig?.config?.styling?.logo || client?.config?.styling?.logo || project.config.styling?.logo,
+        favicon: authConfig?.config?.styling?.favicon || client?.config?.styling?.favicon || project.config.styling?.favicon,
         inlineCSS: project.config.styling?.inlineCSS,
         displayClientName: project.config.styling?.displayClientName,
       },
-      fromEmail: authConfig.config.fromEmail || client.config.fromEmail,
-      fromName: authConfig.config.fromName || client.config.fromName,
-      contactEmail: authConfig.config.contactEmail || client.config.contactEmail,
-      defaultRoleId: authConfig.config.defaultRoleId || client.config.defaultRoleId,
-      requiredFields: authConfig.config.requiredFields || client.config.requiredFields,
-      twoFactor: authConfig.config.twoFactor || client.config.twoFactor,
-      configureTwoFactor: authConfig.config.configureTwoFactor || client.config.configureTwoFactor,
       authTypes: {
         UniqueCode: merge({}, client.config?.authTypes?.UniqueCode, authConfig.config?.UniqueCode),
         Url: merge({}, client.config?.authTypes?.Url, authConfig.config?.Url),
@@ -320,15 +332,29 @@ service.updateClient = async function({ authConfig, project }) {
         Local: merge({}, client.config?.authTypes?.Local, authConfig.config?.Local),
       }
     };
+    // Update these properties (if they exist in the authConfig or client config), else keep the existing value
+    const properties = ['fromEmail', 'fromName', 'contactEmail', 'defaultRoleId', 'requiredFields', 'twoFactor', 'configureTwoFactor'];
+    properties.forEach(property => {
+      if (authConfig?.config && authConfig.config[property]) {
+        newClientConfig[property] = authConfig.config[property];
+      } else if (client?.config && client.config[property]) {
+        newClientConfig[property] = client.config[property];
+      }
+    });
 
     let clientConfig = client.config;
     data.config = merge.recursive({}, clientConfig, newClientConfig);
 
+    // Update allowedDomains if exists
+    if(typeof  project.config.allowedDomains !== 'undefined' && project.config.allowedDomains.length > 0) {
+      data.allowedDomains = project.config.allowedDomains;
+    }
+    
     // update client
     let url = `${authConfig.serverUrlInternal}/api/admin/client/${clientId}`;
     let response = await fetch(url, {
 	    headers: {
-        Authorization: `Basic ${new Buffer(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
         'Content-type': 'application/json',
       },
       method: 'post',
@@ -356,7 +382,7 @@ service.fetchUniqueCode = async function({ authConfig }) {
     let url = `${authConfig.serverUrlInternal}/api/admin/unique-codes?clientId=${clientId}&amount=3`;
     let response = await fetch(url, {
 	    headers: {
-        Authorization: `Basic ${new Buffer(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
       },
     })
     if (!response.ok) {
@@ -382,7 +408,7 @@ service.createUniqueCode = async function({ authConfig, amount }) {
     let url = `${authConfig.serverUrlInternal}/api/admin/unique-code?clientId=${clientId}&amount=${amount}`;
     let response = await fetch(url, {
 	    headers: {
-        Authorization: `Basic ${new Buffer(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
       },
       method: 'post',
       body: '{}',
@@ -415,7 +441,7 @@ service.resetUniqueCode = async function({ authConfig, uniqueCodeId }) {
     let url = `${authConfig.serverUrlInternal}/api/admin/unique-code/${uniqueCodeId}/reset?clientId=${clientId}`;
     let response = await fetch(url, {
 	    headers: {
-        Authorization: `Basic ${new Buffer(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${authConfig.clientId}:${authConfig.clientSecret}`).toString('base64')}`,
       },
       method: 'post',
       body: '{}',

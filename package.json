@@ -26,8 +26,12 @@
   ],
   "private": true,
   "devDependencies": {
-    "@trivago/prettier-plugin-sort-imports": "4.2.0",
-    "prettier": "3.0.3",
-    "promise-mysql": "^5.2.0"
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "mysql2": "^3.11.3",
+    "prettier": "3.0.3"
+  },
+  "dependencies": {
+    "react-leaflet": "^4.2.1",
+    "uuid": "^10.0.0"
   }
 }

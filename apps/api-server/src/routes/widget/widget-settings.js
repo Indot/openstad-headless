@@ -110,6 +110,28 @@ let moduleDefinitions = {
       projectId: null,
     },
   },
+  choiceguide: {
+    packageName: '@openstad-headless/choiceguide',
+    directory: 'choiceguide',
+    js: ['dist/choiceguide.iife.js'],
+    css: ['dist/style.css'],
+    functionName: 'OpenstadHeadlessChoiceGuide',
+    componentName: 'ChoiceGuide',
+    defaultConfig: {
+      projectId: null,
+    },
+  },
+  choiceguideResults: {
+    packageName: '@openstad-headless/choiceguide-results',
+    directory: 'choiceguide-results',
+    js: ['dist/choiceguide-results.iife.js'],
+    css: ['dist/style.css'],
+    functionName: 'OpenstadHeadlessChoiceGuideResults',
+    componentName: 'ChoiceGuideResults',
+    defaultConfig: {
+      projectId: null,
+    },
+  },
   editormap: {
     packageName: '@openstad-headless/leaflet-map',
     directory: 'leaflet-map',
@@ -165,6 +187,17 @@ let moduleDefinitions = {
       projectId: null
     }
   },
+  simplevoting: {
+    packageName: '@openstad-headless/simple-voting',
+    directory: 'simple-voting',
+    js: ['dist/simple-voting.iife.js'],
+    css: ['dist/style.css'],
+    functionName: 'OpenstadHeadlessSimpleVoting',
+    componentName: 'SimpleVoting',
+    defaultConfig: {
+      projectId: null
+    }
+  },
   resourcewithmap: {
     packageName: '@openstad-headless/resource-overview-with-map',
     directory: 'resource-overview-with-map',
@@ -172,6 +205,61 @@ let moduleDefinitions = {
     css: ['dist/style.css'],
     functionName: 'OpenstadHeadlessResourceOverviewWithMap',
     componentName: 'ResourceOverviewWithMap',
+    defaultConfig: {
+      projectId: null,
+    },
+  },
+  resourcedetailwithmap: {
+    packageName: '@openstad-headless/resource-detail-with-map',
+    directory: 'resource-detail-with-map',
+    js: ['dist/resource-detail-with-map.iife.js'],
+    css: ['dist/style.css'],
+    functionName: 'OpenstadHeadlessResourceDetailWithMap',
+    componentName: 'ResourceDetailWithMap',
+    defaultConfig: {
+      projectId: null,
+    },
+  },
+  documentmap: {
+    packageName: '@openstad-headless/document-map',
+    directory: 'document-map',
+    js: ['dist/document-map.iife.js'],
+    css: ['dist/style.css'],
+    functionName: 'OpenstadHeadlessDocumentMap',
+    componentName: 'DocumentMap',
+    defaultConfig: {
+      projectId: null,
+    },
+  },
+  activity: {
+    packageName: '@openstad-headless/activity',
+    directory: 'activity',
+    js: ['dist/activity.iife.js'],
+    css: ['dist/style.css'],
+    functionName: 'OpenstadHeadlessActivity',
+    componentName: 'Activity',
+    defaultConfig: {
+      projectId: null,
+    },
+  },
+  account: {
+    packageName: '@openstad-headless/account',
+    directory: 'account',
+    js: ['dist/account.iife.js'],
+    css: ['dist/style.css'],
+    functionName: 'OpenstadHeadlessAccount',
+    componentName: 'Account',
+    defaultConfig: {
+      projectId: null,
+    },
+  },
+  distributionmodule: {
+    packageName: '@openstad-headless/distribution-module',
+    directory: 'distribution-module',
+    js: ['dist/distribution-module.iife.js'],
+    css: ['dist/style.css'],
+    functionName: 'OpenstadHeadlessDistributionModule',
+    componentName: 'DistributionModule',
     defaultConfig: {
       projectId: null,
     },

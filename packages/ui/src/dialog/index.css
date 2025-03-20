@@ -26,7 +26,15 @@
   max-width: 82.5rem;
   overflow: auto;
   box-sizing: border-box;
+  z-index: 1000;
 }
+
+.osc-DialogContent > div {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 10px;
+}
+
 .osc-DialogContent:focus {
   outline: none;
 }
@@ -65,7 +73,7 @@
   }
 }
 
-.osc-DialogContent .carousel-button-container{
+.osc-DialogContent > .osc-carousel > .carousel-button-container{
   position: absolute;
   display: flex;
   top: -36px;
@@ -74,8 +82,8 @@
   gap: 10px;
 }
 
-.osc-DialogContent .carousel-button-container .osc-carousel-previous,
-.osc-DialogContent .carousel-button-container .osc-carousel-next{
+.osc-DialogContent > .osc-carousel > .carousel-button-container .osc-carousel-previous,
+.osc-DialogContent > .osc-carousel > .carousel-button-container .osc-carousel-next{
   position: relative;
   flex-shrink: 0;
   flex-grow: 1;
@@ -83,12 +91,12 @@
   left: 0;
 }
 
-.osc-DialogContent .carousel-button-container p{
+.osc-DialogContent > .osc-carousel .carousel-button-container p{
   margin: 0;
 }
 
 .osc-DialogContent > div > button,
-.osc-DialogContent .carousel-button-container button{
+.osc-DialogContent > .osc-carousel .carousel-button-container button{
   aspect-ratio: 1;
   min-width: auto;
   min-height: auto;

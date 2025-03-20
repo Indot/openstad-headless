@@ -78,6 +78,7 @@ const formSchema = z.object({
   displayTheme: z.boolean(),
   displayNeighbourhood: z.boolean(),
   displayModbreak: z.boolean(),
+  modbreakTitle: z.string().optional(),
   tagGroups: z.number().array().optional().default([]),
   statusGroups: z.number().array().optional().default([]),
 });
@@ -111,6 +112,7 @@ export default function ProjectSettingsResource() {
       displayNeighbourhood:
         data?.config?.[category]?.displayNeighbourhood || false,
       displayModbreak: data?.config?.[category]?.displayModbreak || false,
+      modbreakTitle: data?.config?.[category]?.modbreakTitle || null,
       tagGroups: data?.config?.resources?.defaultTagIds || [],
       statusGroups: data?.config?.resources?.defaultStatusIds || [],
     }),
@@ -142,6 +144,7 @@ export default function ProjectSettingsResource() {
           displayTheme: values.displayTheme,
           displayNeighbourhood: values.displayNeighbourhood,
           displayModbreak: values.displayModbreak,
+          modbreakTitle: values.modbreakTitle,
           defaultTagIds: values.tagGroups || [],
           defaultStatusIds: values.statusGroups || [],
         },
@@ -170,14 +173,18 @@ export default function ProjectSettingsResource() {
             url: `/projects/${project}/settings`,
           },
           {
-            name: 'Resource',
+            name: 'Inzending',
             url: `/projects/${project}/settings/resource`,
           },
         ]}>
         <div className="container py-6">
           <Form {...form} className="p-6 bg-white rounded-md">
-            <Heading size="xl">Resource template</Heading>
+            <Heading size="xl">Inzendingsinstellingen</Heading>
             <Separator className="my-4" />
+            <p className="text-gray-500">
+            Met resources bedoelen we het type inzending(en) voor dit project. <br /> Denk aan ideeën, plannen, tips of knelpunten. Dit is afhankelijk van wat je wilt uitvragen voor dit project. 
+            </p>
+            <br/>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
               className="lg:w-fit grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -187,7 +194,7 @@ export default function ProjectSettingsResource() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Is het mogelijk om een resource in te sturen?
+                      Is inzenden mogelijk?
                     </FormLabel>
                     {YesNoSelect(field, {})}
                     <FormMessage />
@@ -214,7 +221,7 @@ export default function ProjectSettingsResource() {
                 name="titleMinLength"
                 render={({ field }) => (
                   <FormItem className="col-span-1">
-                    <FormLabel>Minimum lengte van titel</FormLabel>
+                    <FormLabel>Minimum lengte van de titel</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="10" {...field} />
                     </FormControl>
@@ -227,7 +234,7 @@ export default function ProjectSettingsResource() {
                 name="titleMaxLength"
                 render={({ field }) => (
                   <FormItem className="col-span-1">
-                    <FormLabel>Maximum lengte van titel</FormLabel>
+                    <FormLabel>Maximum lengte van de titel</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="50" {...field} />
                     </FormControl>
@@ -240,7 +247,7 @@ export default function ProjectSettingsResource() {
                 name="summaryMinLength"
                 render={({ field }) => (
                   <FormItem className="col-span-1">
-                    <FormLabel>Minimum lengte van samenvatting</FormLabel>
+                    <FormLabel>Minimum lengte van de samenvatting</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="20" {...field} />
                     </FormControl>
@@ -253,7 +260,7 @@ export default function ProjectSettingsResource() {
                 name="summaryMaxLength"
                 render={({ field }) => (
                   <FormItem className="col-span-1">
-                    <FormLabel>Maximum lengte van samenvatting</FormLabel>
+                    <FormLabel>Maximum lengte van de samenvatting</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="140" {...field} />
                     </FormControl>
@@ -287,49 +294,7 @@ export default function ProjectSettingsResource() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="displayLocation"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Wordt het invoerveld voor de locatie weergegeven in het
-                      resource-formulier?
-                    </FormLabel>
-                    {YesNoSelect(field, {})}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="displayTheme"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Wordt het invoerveld voor het thema weergegeven in het
-                      resource-formulier?
-                    </FormLabel>
-                    {YesNoSelect(field, {})}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="displayNeighbourhood"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Wordt het invoerveld voor de buurt weergegeven in het
-                      resource-formulier?
-                    </FormLabel>
-                    {YesNoSelect(field, {})}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="displayModbreak"
                 render={({ field }) => (
@@ -339,6 +304,25 @@ export default function ProjectSettingsResource() {
                       weergegeven in het resource-formulier?
                     </FormLabel>
                     {YesNoSelect(field, {})}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              /> */}
+
+<FormField
+                control={form.control}
+                name="modbreakTitle"
+                render={({ field }) => (
+                  <FormItem className="col-span-1">
+                    <FormLabel>
+                      Titel voor boven modbreak 
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Tekst die boven de modbreak wordt getoond"
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -371,10 +355,11 @@ export default function ProjectSettingsResource() {
               <CheckboxList
                 form={form}
                 fieldName="statusGroups"
-                fieldLabel="Selecteer de statusen die standaard op resource gezet zullen worden"
+                fieldLabel="Selecteer de statussen die standaard op de inzending gezet worden."
                 label={(t) => t.name}
                 keyPerItem={(t) => `${t.id}`}
                 items={statuses}
+                layout="vertical"
                 selectedPredicate={(t) =>
                   form.getValues('statusGroups').findIndex((tg) => tg === t.id) >
                   -1
@@ -396,48 +381,6 @@ export default function ProjectSettingsResource() {
               </Button>
             </form>
           </Form>
-          <div className="p-6 bg-white rounded-md mt-4">
-            <Heading size="xl" className="mb-4">
-              Resource mail template
-            </Heading>
-            <Separator className="mb-4" />
-            <form
-              onSubmit={() => {}}
-              className="lg:w-1/2 grid grid-cols-2 gap-4">
-              <div className="col-span-full space-y-2">
-                <Label>Type e-mail</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="thanks">Bedank-mail</SelectItem>
-                    <SelectItem value="submit">
-                      Opleveren van concept-plan
-                    </SelectItem>
-                    <SelectItem value="publish">
-                      Uitbrengen van concept-plan
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="col-span-full space-y-2">
-                <Label>Vanaf adres</Label>
-                <Input id="mail" placeholder="email@example.com" />
-              </div>
-              <div className="col-span-full space-y-2">
-                <Label>Onderwerp</Label>
-                <Input id="subject" placeholder="Onderwerp van de mail" />
-              </div>
-              <div className="col-span-full space-y-2">
-                <Label>E-mail tekst template</Label>
-                <Textarea id="template" placeholder="Inhoud van de mail" />
-              </div>
-              <Button type="button" className="w-fit mt-4">
-                Opslaan
-              </Button>
-            </form>
-          </div>
         </div>
       </PageLayout>
     </div>

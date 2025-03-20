@@ -21,7 +21,7 @@ describe('Grant Type Client', () => {
 
     await db.migrate.latest();
 
-    await db.raw("insert into clients (`id`, `name`, `redirectUrl`, `description`, `clientId`, `clientSecret`, `siteUrl`, `authTypes`) values(1, 'test', 'test', 'test', 'trustedClient', 'ssh-otherpassword', 'test', '[\"UniqueCode\"]');");
+    await db.raw("insert into clients (`id`, `name`, `redirectUrl`, `description`, `clientId`, `clientSecret`, `authTypes`) values(1, 'test', 'test', 'test', 'trustedClient', 'ssh-otherpassword', '[\"UniqueCode\"]');");
 
   });
 
@@ -31,7 +31,7 @@ describe('Grant Type Client', () => {
     const clientId = 'trustedClient';
     const clientSecret = 'ssh-otherpassword';
 
-    const basicAuth = new Buffer(`${clientId}:${clientSecret}`).toString('base64');
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
     agent.get('/api/admin/users')
       .set('Content-Type', 'application/json')
@@ -44,7 +44,7 @@ describe('Grant Type Client', () => {
     const clientId = 'trustedClient';
     const clientSecret = 'ssh-otherpassword';
 
-    const basicAuth = new Buffer(`${clientId}:${clientSecret}`).toString('base64');
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
     agent.get('/api/admin/users')
       .set('Content-Type', 'application/json')

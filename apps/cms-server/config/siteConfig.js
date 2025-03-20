@@ -6,6 +6,7 @@ const resourcesSchema = require('./resources.js').schemaFormat;
 module.exports = {
   get: (shortName, siteData, assetsIdentifier) => {
  
+    
     const siteConfig = {
       shortName: shortName,
       prefix: siteData.sitePrefix ? '/' + siteData.sitePrefix : false,
@@ -28,10 +29,10 @@ module.exports = {
         // `asset` supports the project's webpack build for client-side assets.
         asset: {},
         // The project's first custom page type.
-        'default-page': {}
-      }
+        'default-page': {},
+      },
     };
-
+    
     return siteConfig;
   }
 };

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import {
-  Form,
+  Form, FormControl, FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -14,6 +14,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ResourceDetailWidgetProps } from '@openstad-headless/resource-detail/src/resource-detail';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import {Input} from "@/components/ui/input";
+import {useFieldDebounce} from "@/hooks/useFieldDebounce";
 
 const formSchema = z.object({
   displayImage: z.boolean(),
@@ -28,7 +30,12 @@ const formSchema = z.object({
   displayTags: z.boolean(),
   displaySocials: z.boolean(),
   displayStatus: z.boolean(),
+  displayStatusBar: z.boolean(),
   displayLikes: z.boolean(),
+  displayDocuments: z.boolean(),
+  documentsTitle: z.string().optional(),
+  documentsDesc: z.string().optional(),
+  clickableImage: z.boolean(),
 });
 
 export default function WidgetResourceDetailDisplay(
@@ -39,6 +46,8 @@ export default function WidgetResourceDetailDisplay(
   async function onSubmit(values: FormData) {
     props.updateConfig({ ...props, ...values });
   }
+
+  const { onFieldChange } = useFieldDebounce(props.onFieldChanged);
 
   const form = useForm<FormData>({
     resolver: zodResolver<any>(formSchema),
@@ -57,14 +66,19 @@ export default function WidgetResourceDetailDisplay(
       displayTags: undefinedToTrueOrProp(props?.displayTags),
       displaySocials: undefinedToTrueOrProp(props?.displaySocials),
       displayStatus: undefinedToTrueOrProp(props?.displayStatus),
+      displayStatusBar: undefinedToTrueOrProp(props?.displayStatusBar),
       displayLikes: undefinedToTrueOrProp(props?.displayLikes),
+      displayDocuments: undefinedToTrueOrProp(props?.displayDocuments),
+      clickableImage: props?.clickableImage || false,
+      documentsTitle: props?.documentsTitle || '',
+      documentsDesc: props?.documentsDesc || '',
     },
   });
 
   return (
     <div className="p-6 bg-white rounded-md">
       <Form {...form}>
-        <Heading size="xl">Display</Heading>
+        <Heading size="xl">Weergave</Heading>
         <Separator className="my-4" />
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -196,10 +210,22 @@ export default function WidgetResourceDetailDisplay(
 
           <FormField
             control={form.control}
+            name="displayStatusBar"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>De balk met statussen weergeven bij de afbeelding?</FormLabel>
+                {YesNoSelect(field, props)}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="displaySocials"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Social share opties weergeven</FormLabel>
+                <FormLabel>Delen via social media opties weergeven</FormLabel>
                 {YesNoSelect(field, props)}
                 <FormMessage />
               </FormItem>
@@ -217,6 +243,87 @@ export default function WidgetResourceDetailDisplay(
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="displayDocuments"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Geüploade documenten weergeven
+                </FormLabel>
+                {YesNoSelect(field, props)}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="clickableImage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Moet de afbeelding in de dialog klikbaar zijn?
+                </FormLabel>
+                <FormDescription>
+                  Als je dit aanvinkt, wordt de afbeelding in de dialog klikbaar en wordt de afbeelding geopend in een nieuw tabblad.
+                </FormDescription>
+                {YesNoSelect(field, props)}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {form.watch("displayDocuments") && (
+            <>
+              <FormField
+                control={form.control}
+                name="documentsTitle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Welke titel moet er boven de download knop(pen) komen?
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        {...field}
+                        onChange={(e) => {
+                          onFieldChange(field.name, e.target.value);
+                          field.onChange(e);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="documentsDesc"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Welke beschrijving moet er boven de download knop(pen) komen?
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        {...field}
+                        onChange={(e) => {
+                          onFieldChange(field.name, e.target.value);
+                          field.onChange(e);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
 
           <Button className="w-fit col-span-full" type="submit">
             Opslaan

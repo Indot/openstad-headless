@@ -6,7 +6,6 @@ export type ResourceFormWidgetProps = BaseProps &
 
 export type ResourceFormWidget = {
     widgetId?: number;
-    afterSubmitUrl?: string;
     displayTitle?: boolean;
     title?: string;
     displayDescription?: boolean;
@@ -14,6 +13,9 @@ export type ResourceFormWidget = {
     submit?: Submit;
     items?: Array<Item>;
     info?: Info;
+    confirmation?: Confirmation;
+    redirectUrl?: string,
+    placeholder?: string,
 };
 
 export type General = {
@@ -55,22 +57,32 @@ export type Item = {
     variant?: string;
     multiple?: boolean;
     images?: Array<{
-        image?: any;
+        image?: never;
         src: string;
     }>;
     options?: Array<Option>;
+    placeholder?: string,
+    defaultValue?: string,
 };
 
 export type Option = {
     trigger: string;
     titles: Array<Title>;
     images?: Array<{
-        image?: any;
+        image?: never;
         src: string;
     }>;
 };
 
 export type Title = {
-    text: string;
+    text?: string;
     key: string;
+    isOtherOption?: boolean;
+    defaultValue?: boolean;
+    weights?: Record<string, Weight>;
+};
+
+type Weight = {
+    weightX: string | number;
+    weightY: string | number;
 };

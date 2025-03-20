@@ -37,6 +37,12 @@ module.exports = function (db, sequelize, DataTypes) {
         allowNull: false,
         default: 10,
       },
+
+      addToNewResources: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        default: false,
+      },
       
       label: {
         type: DataTypes.STRING,
@@ -64,6 +70,27 @@ module.exports = function (db, sequelize, DataTypes) {
       },
 
 		  extraData: getExtraDataConfig(DataTypes.JSON, 'tags'),
+
+      useDifferentSubmitAddress: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        default: false,
+      },
+
+      newSubmitAddress: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+
+      defaultResourceImage: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+
+      documentMapIconColor: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      }
 
 	  }, {
 
@@ -124,6 +151,14 @@ module.exports = function (db, sequelize, DataTypes) {
   Tag.associate = function (models) {
     this.belongsToMany(models.Resource, {
       through: 'resource_tags',
+      constraints: false,
+    });
+
+    this.belongsToMany(models.Comment, {
+      through: 'comment_tags',
+      as: 'comments',
+      foreignKey: 'tagId',
+      otherKey: 'commentId',
       constraints: false,
     });
 

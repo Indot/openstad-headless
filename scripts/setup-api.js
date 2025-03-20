@@ -1,6 +1,5 @@
 const fs = require('fs');
-const util = require('util');
-const apiDb = require('promise-mysql');
+const apiDb = require('mysql2/promise');
 const execute = require('./execute');
 
 module.exports = async function setupApi(actions) {
@@ -64,6 +63,9 @@ DB_NAME=${process.env.API_DB_NAME}
 DB_PORT=${process.env.API_DB_PORT}
 DB_DIALECT=${process.env.API_DB_DIALECT}
 
+MESSAGESTREAMING_REDIS_URL=${process.env.MESSAGESTREAMING_REDIS_URL}
+MESSAGESTREAMING_POSTFIX=${process.env.MESSAGESTREAMING_POSTFIX}
+
 FROM_EMAIL_ADDRESS=${process.env.API_FROM_EMAIL_ADDRESS}
 SMTP_HOST=${process.env.API_SMTP_HOST}
 SMTP_PORT=${process.env.API_SMTP_PORT}
@@ -76,6 +78,7 @@ AUTH_ADAPTER_OPENSTAD_SERVERURL=${process.env.AUTH_APP_URL}
 AUTH_FIXEDAUTHTOKENS='${fixed_auth_tokens}'
 
 IMAGE_APP_URL=${process.env.IMAGE_APP_URL}
+IMAGE_VERIFICATION_TOKEN=${process.env.IMAGE_VERIFICATION_TOKEN}
 ADMIN_DOMAIN=${process.env.ADMIN_DOMAIN}
 `
     if (actions['create config']) {

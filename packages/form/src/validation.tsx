@@ -4,24 +4,30 @@ import {CombinedFieldPropsWithType} from "./props";
 export const getSchemaForField = (field: CombinedFieldPropsWithType) => {
     const fileSchema = z.object({
         name: z.string(),
-        type: z.string(),
-        size: z.number(),
-        lastModified: z.number(),
-        lastModifiedDate: z.date(),
-        webkitRelativePath: z.string(),
+        url: z.string()
     });
 
     switch (field.type) {
         case 'text':
-            const min = field.minCharacters || 0;
+            let min = field.minCharacters || 0;
             let minWarning = field.minCharactersWarning || 'Tekst moet minimaal {minCharacters} karakters bevatten';
-            minWarning = minWarning.replace('{minCharacters}', min.toString());
+
+            if (field.fieldRequired && min == 0) {
+                min = 1;
+                minWarning = field.requiredWarning || 'Dit veld is verplicht';
+            } else {
+                minWarning = minWarning.replace('{minCharacters}', min.toString());
+            }
 
             const max = field.maxCharacters || Infinity;
             let maxWarning = field.maxCharactersWarning || 'Tekst moet maximaal {maxCharacters} karakters bevatten';
             maxWarning = maxWarning.replace('{maxCharacters}', max.toString());
 
-            return z.string().min(min, minWarning).max(max, maxWarning);
+            if (field.fieldRequired) {
+                return z.string().min(min, minWarning).max(max, maxWarning);
+            } else {
+                return z.string().min(min, minWarning).max(max, maxWarning).optional();
+            }
 
         case 'checkbox':
             if (typeof (field.fieldRequired) !== 'undefined' && field.fieldRequired) {
@@ -29,17 +35,25 @@ export const getSchemaForField = (field: CombinedFieldPropsWithType) => {
             } else {
                 return undefined;
             }
-        case 'upload':
+        case 'documentUpload':
+        case 'imageUpload':
             if (typeof (field.fieldRequired) !== 'undefined' && field.fieldRequired) {
                 return z.array(fileSchema).min(1, field.requiredWarning || 'Dit veld is verplicht');
             } else {
                 return undefined;
             }
         case 'map':
-            return z.object({
+            const mapSchema = z.object({
                 lat: z.number().optional(),
-                lng: z.number().optional()
-            }).refine((value) => Object.keys(value).length > 0, {message: (field.requiredWarning || 'Dit veld is verplicht')});
+                lng: z.number().optional(),
+            });
+
+            if (typeof (field.fieldRequired) !== 'undefined' && field.fieldRequired) {
+                return mapSchema.refine((value) => Object.keys(value).length > 0, { message: (field.requiredWarning || 'Dit veld is verplicht') });
+            }
+
+            return mapSchema.optional();
+
         case 'range':
         case 'radiobox':
         case 'select':

@@ -19,6 +19,14 @@ router
       req.scope.push({ method: ['includeRepliesOnComments', req.user.id] });
     }
 
+    if (req.query.includeTags) {
+      req.scope.push('includeTags');
+    }
+
+    if (req.query.includeAllComments) {
+      req.scope.push('includeAllComments');
+    }
+
     if (req.query.includeVoteCount) {
       req.scope.push({ method: ['includeVoteCount', 'comment'] });
     }
@@ -91,6 +99,10 @@ router.route('/')
       where.sentiment = sentiment;
     }
 
+    let onlyIncludeTagIds = req.query.onlyIncludeTagIds || '';
+
+    req.scope.push({ method: ['filterByTags', onlyIncludeTagIds] });
+
     return db.Comment
       .scope(...req.scope)
       .findAndCountAll(
@@ -152,20 +164,31 @@ router.route('/')
     db.Comment
       .authorizeData(data, 'create', req.user)
       .create(data)
-      .then(result => {
+      .then(async result => {
+        // Handle tags
+        let tags = req.body.tags || [];
+        if (!Array.isArray(tags)) tags = [tags];
+        tags = tags.filter(tag => !Number.isNaN(parseInt(tag)));
+        tags = tags.map(tag => parseInt(tag));
+        tags = tags.filter((value, index) => tags.indexOf(value) === index);
+        if (tags.length) {
+          await result.setTags(tags);
+        }
+
+        const scopes = [
+          'defaultScope',
+          'includeResource',
+          { method: ['includeVoteCount', 'comment'] },
+          { method: ['includeUserVote', 'comment', req.user.id] }
+        ];
 
         db.Comment
-          .scope(
-            'defaultScope',
-            'includeResource',
-            { method: ['includeVoteCount', 'comment'] },
-            { method: ['includeUserVote', 'comment', req.user.id] },
-          )
+          .scope(...scopes)
           .findByPk(result.id)
           .then(function(comment) {
             res.json(comment);
-          });
-
+          })
+          .catch(next);
       })
       .catch(next);
 
@@ -199,16 +222,22 @@ router.route('/:commentId(\\d+)')
   // delete comment
   // --------------
   .delete(auth.useReqUser)
-  .delete(function(req, res, next) {
+  .delete(async function(req, res, next) {
     const comment = req.results;
     if (!( comment && comment.can && comment.can('delete') )) return next( new Error('You cannot delete this comment') );
 
-    comment
-      .destroy()
-      .then(() => {
-        res.json({ 'comment': 'deleted' });
-      })
-      .catch(next);
+    try {
+      await comment.destroy();
+
+      const childComments = await db.Comment.findAll({where: {parentId: comment.id}});
+      for (const childComment of childComments) {
+        await childComment.destroy();
+      }
+
+      res.json({'comment': 'deleted', 'replies': 'deleted'});
+    } catch (err) {
+      next(err);
+    }
   });
 
 router.route('/:commentId(\\d+)/vote')

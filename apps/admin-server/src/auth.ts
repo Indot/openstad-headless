@@ -81,10 +81,7 @@ async function authMiddleware(req: NextRequest, res: NextResponse) {
     return NextResponse.redirect( newUrl, { headers: res.headers });
   }
 
-  if (!(
-      req.nextUrl.pathname.startsWith('/_') ||         // not on internal urls
-      req.nextUrl.pathname.startsWith('/api/openstad') // api routes require user but will nog login
-     )) {
+  if (!(req.nextUrl.pathname.startsWith('/_'))) { // not on internal urls
 
     let forceNewLogin = false;
 
@@ -98,7 +95,7 @@ async function authMiddleware(req: NextRequest, res: NextResponse) {
         if (!response.ok) throw new Error('TokenValidationFailed')
         let result:OpenstadProfile = await response.json();
         if (!result.id) throw 'no user'
-        if ( !( req.nextUrl.pathname.match(/^\/(?:projects)?\/?/) && hasRole(result, 'member') ) // project overview is available for members; anything else requires
+        if ( !( req.nextUrl.pathname.match(/^\/(?:projects)?\/?$/) && hasRole(result, 'member') ) // project overview is available for members; anything else requires
              && result.role != 'superuser'
              && result.role != 'admin' ) {
           forceNewLogin = true;
@@ -119,14 +116,15 @@ async function authMiddleware(req: NextRequest, res: NextResponse) {
     }
 
     // login if token not found
-    if (!jwt) {
+    if (!jwt && !req.nextUrl.pathname.startsWith('/api/openstad')) {
+       // api routes require user but will nog login
       return signIn(req, res, targetProjectId, forceNewLogin)
     }
 
   }
 
   // api requests: add jwt
-  if (req.nextUrl.pathname.startsWith('/api/openstad')) {
+  if (jwt && req.nextUrl.pathname.startsWith('/api/openstad')) {
     let path = req.nextUrl.pathname.replace('/api/openstad', '');
     let query = searchParams ? '?' + searchParams.toString() : '';
     query = query.replace(/openstadlogintoken=(?:.(?!&|$))+./, '');
@@ -137,6 +135,19 @@ async function authMiddleware(req: NextRequest, res: NextResponse) {
       },
     });
   }
+
+    // email assets requests: add jwt
+    if (jwt && req.nextUrl.pathname.startsWith('/email-assets')) {
+      let path = req.nextUrl.pathname.replace('/email-assets', '');
+      let query = searchParams ? '?' + searchParams.toString() : '';
+      query = query.replace(/openstadlogintoken=(?:.(?!&|$))+./, '');
+      const rewrittenUrl = `${process.env.EMAIL_ASSETS_URL}${path}${query}`;
+      return NextResponse.rewrite(rewrittenUrl, {
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+        },
+      });
+    }
 
   return res;
 

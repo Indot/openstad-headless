@@ -22,6 +22,9 @@ const config: ResourceOverviewWidgetProps = {
   displaySorting: true,
   allowFiltering: true,
   displayBanner: true,
+  bannerText: 'Dit is een title',
+  displayStatusLabel: true,
+  displayVariant: 'compact',
   api: {
     url: import.meta.env.VITE_API_URL,
   },
@@ -33,6 +36,17 @@ const config: ResourceOverviewWidgetProps = {
   },
   displayType: import.meta.env.VITE_DISPLAY_TYPE || 'cardgrid',
   itemLink: import.meta.env.VITE_ITEM_LINK,
+  sorting: [
+    { value: 'createdAt_desc', label: 'Nieuwste eerst' },
+    { value: 'createdAt_asc', label: 'Oudste eerst' },
+  ],
+  rawInput:
+        "<h1>Plan:</h1>" +
+        "<b>Title:</b>{{ title | replace('Lorem', 'Florem') }}<br />" +
+        "<em>Resource:</em>{{ resource | dump }}<br />" +
+        "{% if resource.viewableByRole = 'all' %}Iedereen mag dit zien!{% else %}Niet iedereen mag dit zien helaas.{% endif %}<br />" +
+        "{% if resource.startDateHumanized %}Datum: {{ resource.startDateHumanized }}{% endif %}<br />" +
+        "{% if resource.location.lat %}Breedtegraad: {{ resource.location.lat }}{% endif %}<br />"
 };
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

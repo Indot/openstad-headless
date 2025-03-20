@@ -1,8 +1,3 @@
-[data-openstad-iconsection]{
-  margin-block-start: var(--nlds-iconsection-margin-block-start, var(--nlds-default-margin-block-start, 3.5rem));
-  margin-block-end: var(--nlds-iconsection-margin-block-end, var(--nlds-default-margin-block-end, 3.5rem));
-}
-
 .icon-section{
   background-color: var(--nlds-iconsection-background-color, var(--nlds-default-background-color, #F0F4F8));
 }
@@ -10,15 +5,15 @@
 .icon-section .utrecht-button.utrecht-button--subtle.utrecht-accordion__button{
   background-color: var(--utrecht-button-primary-action-background-color);
   color: var(--utrecht-button-primary-action-color);
-  display: block;
   border-radius: var(--nlds-iconsection-border-radius, 0);
+  justify-content: center !important;
+  grid-gap: 20px;
 }
-.icon-section .utrecht-accordion__button[aria-expanded]::after{
-  background-color: var(--utrecht-button-primary-action-color);
-  top: 50%;
-  transform: translateY(-50%);
-  right: 10px
+.icon-section .utrecht-button.utrecht-button--subtle.utrecht-accordion__button *{
+  color: var(--utrecht-button-primary-action-color);
+  fill: var(--utrecht-button-primary-action-color);
 }
+
 .icon-section .utrecht-accordion__panel{
   padding: revert;
   border: none;

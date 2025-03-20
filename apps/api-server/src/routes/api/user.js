@@ -14,7 +14,7 @@ const hasRole = require('../../lib/sequelize-authorization/lib/hasRole');
 
 const filterBody = (req, res, next) => {
   const data = {};
-  const keys = ['password', 'name', 'nickName', 'email', 'phoneNumber', 'address', 'city', 'postcode', 'extraData', 'listableByRole', 'detailsViewableByRole'];
+  const keys = ['password', 'name', 'nickName', 'email', 'phoneNumber', 'address', 'city', 'postcode', 'extraData', 'listableByRole', 'detailsViewableByRole', 'firstname', 'lastname'];
 
   keys.forEach((key) => {
     if (typeof req.body[key] != 'undefined') {
@@ -241,7 +241,8 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
       .then(found => {
         if (!found) throw new createError(404, 'User not found');
         req.targetUser = found;
-        req.externalUserId= found.idpUser.identifier;
+        req.externalUserId = found.idpUser.identifier;
+        req.externalUserProvider = found.idpUser.provider;
         next();
         return null;
       })
@@ -250,7 +251,8 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
   .put(function (req, res, next) {
     if (!req.externalUserId) return next();
     // this user on other projects
-    let where = { idpUser: { identifier: req.externalUserId }, [Op.not]: { id: req.userId } };
+    let where = { idpUser: { identifier: req.externalUserId, provider: req.externalUserProvider }, [Op.not]: { id: req.userId } };
+    console.log('===', where);
     db.User
       .scope(...req.scope)
       .findAll({
@@ -353,7 +355,7 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
   .put(function (req, res, next) {
     if (!req.externalUserId) return next();
     // refresh: this user including other projects
-    let where = { idpUser: { identifier: req.externalUserId } };
+    let where = { idpUser: { identifier: req.externalUserId, provider: req.externalUserProvider } };
     db.User
       .scope(...req.scope)
       .findAll({
@@ -439,15 +441,14 @@ router.route('/:userId(\\d+)')
     return next();
   })
   .put(async function (req, res, next) {
-
     let user = req.results;
     let userData = merge.recursive(true, req.body);
 
     try {
 
       if (user.idpUser?.identifier) {
-
         let updatedUserData = merge(true, userData, { id: user.idpUser && user.idpUser.identifier });
+        const updatedUserDataForProject = merge.recursive({}, updatedUserData);
 
         if (req.results.idpUser.provider == req.authConfig.provider && req.adapter.service.updateUser) {
           updatedUserData = await req.adapter.service.updateUser({ authConfig: req.authConfig, userData: merge(true, userData, { id: user.idpUser && user.idpUser.identifier }) });
@@ -464,17 +465,30 @@ router.route('/:userId(\\d+)')
             .scope(['includeProject'])
             .findAll({
               where: {
-                idpUser: { identifier: updatedUserData.idpUser.identifier },
+                idpUser: { identifier: updatedUserData.idpUser.identifier, provider: updatedUserData.idpUser.provider },
                 projectId: { [Op.not]: 0 }
               }
             })
 
-        for (let apiUser of apiUsers) {
-          let data = apiUser.projectId == req.params.projectId ? updatedUserData : synchronizedUpdatedUserData;
-          let result = await apiUser
-              .authorizeData(data, 'update', req.user)
-              .update(data)
-        };
+        apiUsers.forEach((apiUser, i) => {
+          return new Promise((resolve, reject) => {
+            let data = apiUser.projectId == req.params.projectId ? updatedUserDataForProject : synchronizedUpdatedUserData;
+
+            if (req.user.can('update', apiUser)) {
+              apiUser
+                .authorizeData(data, 'update', req.user)
+                .update(data)
+                .then((result) => {
+                  resolve();
+                })
+                .catch((err) => {
+                  resolve(err);
+                });
+            } else {
+              resolve(new Error('User not authorized to update nickName'));
+            }
+          });
+        });
 
       } else {
 
@@ -526,7 +540,7 @@ router.route('/:userId(\\d+)')
       let authConfig = await authSettings.config({ project: req.project, useAuth: req.query.useAuth || 'default' });
       let adapter = await authSettings.adapter({ authConfig: req.authConfig });
       if (adapter.service.deleteUser) {
-        adapter.service.deleteUser({ authConfig, userData: { id: user.idpUser.identifier } })
+        adapter.service.deleteUser({ authConfig, userData: { id: user.idpUser.identifier, provider: user.idpUser.provider } })
       }
     }
     

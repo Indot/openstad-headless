@@ -98,12 +98,28 @@ module.exports = function (db, sequelize, DataTypes) {
     areaId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+    },
+    
+    installationUrls: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return {
+          api: process.env.URL ? new URL(process.env.URL).host : '',
+          img: process.env.IMAGE_APP_URL ? new URL(process.env.IMAGE_APP_URL).host : '',
+        };
+      },
+      set(val) {
+        throw new Error('installationUrls is a virtual field and cannot be set');
+      },
+      auth: {
+        viewableBy: 'admin',
+      },
     }
 
   }, {
 
     defaultScope: {
-      attributes: { exclude: ['emailConfig'] }
+      attributes: { exclude: ['emailConfig', 'installationUrls'] }
     },
 
     hooks: {
@@ -168,21 +184,35 @@ module.exports = function (db, sequelize, DataTypes) {
       },
 
       afterCreate: async function (instance, options) {
+        if (options.skipDefaultStatuses) return;
+
         // create a default status
         let defaultStatus = await db.Status.create({
           projectId: instance.id,
           name: 'open',
           seqnr: 10,
+          addToNewResources: true,
           canComment: true,
           editableByUser: true,
         });
-        await instance.update({
-          config: {
-            statuses: {
-              defaultStatusId: defaultStatus.id,
-            }
-          }
-        })
+
+        await db.Status.create({
+          projectId: instance.id,
+          name: 'closed',
+          seqnr: 20,
+          addToNewResources: false,
+          canComment: true,
+          editableByUser: true,
+        });
+
+        await db.Status.create({
+          projectId: instance.id,
+          name: 'accepted',
+          seqnr: 30,
+          addToNewResources: false,
+          canComment: true,
+          editableByUser: true,
+        });
       },
 
     },
@@ -214,6 +244,10 @@ module.exports = function (db, sequelize, DataTypes) {
 
       includeEmailConfig: {
         attributes: {include: ['emailConfig']},
+      },
+      
+      includeInstallationUrls: {
+        attributes: {include: ['installationUrls']},
       },
 
       includeAreas: {

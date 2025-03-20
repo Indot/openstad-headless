@@ -4,32 +4,44 @@ import type { RangeSliderProps } from "@openstad-headless/ui/src/form-elements/a
 import type { CheckboxFieldProps } from "@openstad-headless/ui/src/form-elements/checkbox";
 import type { SelectFieldProps } from "@openstad-headless/ui/src/form-elements/select";
 import type { RadioboxFieldProps } from "@openstad-headless/ui/src/form-elements/radio";
-import type { FileUploadProps} from "@openstad-headless/ui/src/form-elements/file-upload";
+import type { ImageUploadProps} from "@openstad-headless/ui/src/form-elements/image-upload";
+import type { DocumentUploadProps} from "@openstad-headless/ui/src/form-elements/document-upload";
 import type { HiddenInputProps } from "@openstad-headless/ui/src/form-elements/hidden";
 import type {ImageChoiceFieldProps} from "@openstad-headless/ui/src/form-elements/image-choice";
-import {MapProps} from "@openstad-headless/ui/src/form-elements/map/index.js";
+import type {MapProps} from "@openstad-headless/ui/src/form-elements/map";
+import type {InfoFieldProps} from "@openstad-headless/ui/src/form-elements/info";
+import type {NumberInputProps} from "@openstad-headless/ui/src/form-elements/number";
 
 export type FormProps = {
     title?: string;
     fields: Array<CombinedFieldProps>;
     submitText?: string;
     submitHandler: (values: { [p: string]: string | Record<number, never> | []}) => void;
+    getValuesOnChange?: (values: { [p: string]: string | Record<number, never> | []}) => void;
     submitDisabled?: boolean;
+    allowResetAfterSubmit?: boolean;
     secondaryLabel?: string;
     secondaryHandler?: (values: { [p: string]: string | Record<number, never> | []}) => void;
+    placeholder?: string;
+    currentPage?: any;
+    setCurrentPage?: (page: number) => void;
+    prevPage?: any;
 }
 
 type CombinedFieldPropsWithType =
     | ({ type?: 'text' } & TextInputProps)
+    | ({ type?: 'number' } & NumberInputProps)
     | ({ type?: 'tickmark-slider' } & TickmarkSliderProps)
     | ({ type?: 'range' } & RangeSliderProps)
     | ({ type?: 'checkbox' } & CheckboxFieldProps)
     | ({ type?: 'select' } & SelectFieldProps)
     | ({ type?: 'radiobox' } & RadioboxFieldProps)
-    | ({ type?: 'upload' } & FileUploadProps)
+    | ({ type?: 'imageUpload' } & ImageUploadProps)
+    | ({ type?: 'documentUpload' } & DocumentUploadProps)
     | ({ type?: 'hidden' } & HiddenInputProps)
     | ({ type?: 'imageChoice' } & ImageChoiceFieldProps)
-    | ({ type?: 'map' } & MapProps);
+    | ({ type?: 'map' } & MapProps)
+    | ({ type?: 'none' } & InfoFieldProps);
 
 type ComponentFieldProps = (
     {
@@ -45,9 +57,12 @@ type CombinedFieldProps = (
     CheckboxFieldProps |
     SelectFieldProps |
     RadioboxFieldProps |
-    FileUploadProps |
+    ImageUploadProps |
+    DocumentUploadProps |
     HiddenInputProps |
-    ImageChoiceFieldProps
+    ImageChoiceFieldProps |
+    NumberInputProps |
+    InfoFieldProps
 );
 
 export type { CombinedFieldProps as FieldProps, CombinedFieldPropsWithType, ComponentFieldProps};

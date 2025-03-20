@@ -48,7 +48,7 @@ export default function WidgetResourceOverviewGeneral(
     defaultValues: {
       resourceType: props?.resourceType || 'resource',
       displayType: props?.displayType || 'cardrow',
-      itemLink: props?.itemLink || '/resources/[id]',
+      itemLink: props?.itemLink || '/resource?openstadResourceId=[id]',
       rawInput: props?.rawInput || '',
     },
   });
@@ -66,7 +66,7 @@ export default function WidgetResourceOverviewGeneral(
             name="resourceType"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Resource type</FormLabel>
+                <FormLabel>Soort inzending</FormLabel>
                 <Select
                   onValueChange={(value) => {
                     field.onChange(value);
@@ -91,7 +91,7 @@ export default function WidgetResourceOverviewGeneral(
             name="displayType"
             render={({ field }) => (
               <FormItem className="col-span-full">
-                <FormLabel>Display type</FormLabel>
+                <FormLabel>Weergavetype</FormLabel>
                 <Select
                   onValueChange={(value) => {
                     field.onChange(value);
@@ -105,10 +105,10 @@ export default function WidgetResourceOverviewGeneral(
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="cardrow">
-                      Cards op een row - Linkt naar items op een andere pagina.
+                      Inzending op een nieuwe pagina openen.
                     </SelectItem>
                     <SelectItem value="cardgrid">
-                      Cards op een grid - Opent items op dezelfde pagina.
+                      Inzendingen op de huidige pagina tonen, in een dialog.
                     </SelectItem>
                     <SelectItem value="raw">
                       Creëer je eigen template.
@@ -120,73 +120,99 @@ export default function WidgetResourceOverviewGeneral(
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="itemLink"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  Link (relatief) naar de specifieke resource
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Bijv: /resources/[id]"
-                    type="text"
-                    {...field}
-                    onChange={(e) => {
-                      onFieldChange(field.name, e.target.value);
-                      field.onChange(e);
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          { form.watch('displayType') === 'cardrow' && (
+            <FormField
+              control={form.control}
+              name="itemLink"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Link (relatief) naar de specifieke inzending
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Bijv: /resources/[id]"
+                      type="text"
+                      {...field}
+                      onChange={(e) => {
+                        onFieldChange(field.name, e.target.value);
+                        field.onChange(e);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
-          <FormField
-            control={form.control}
-            name="rawInput"
-            render={({ field }) => (
-              <FormItem className="col-span-full">
-                <FormLabel>
-                  Template voor display: &quot; Creëer je eigen template.&quot;
-                </FormLabel>
-                <div className="text-xs pb-4">
-                  <h2>Te gebruiken variabelen:</h2>
-                  <ul className="list-disc">
-                    <li className="ml-4">{`{{projectId}}`}</li>
-                    <li className="ml-4">{`{{user}} -> Bijvoorbeeld {{user.name}}`}</li>
-                    <li className="ml-4">{`{{startDateHumanized}}`}</li>
-                    <li className="ml-4">{`{{status}}`}</li>
-                    <li className="ml-4">{`{{title}}`}</li>
-                    <li className="ml-4">{`{{summary}}`}</li>
-                    <li className="ml-4">{`{{description}}`}</li>
-                    <li className="ml-4">{`{{images}} -> Bijvoorbeeld {{images[nummer].src}}`}</li>
-                    <li className="ml-4">{`{{budget}}`}</li>
-                    <li className="ml-4">{`{{extraData}}`}</li>
-                    <li className="ml-4">{`{{location}}`}</li>
-                    <li className="ml-4">{`{{modBreak}}`}</li>
-                    <li className="ml-4">{`{{modBreakDateHumanized}}`}</li>
-                    <li className="ml-4">{`{{progress}}`}</li>
-                    <li className="ml-4">{`{{createDateHumanized}}`}</li>
-                    <li className="ml-4">{`{{publishDateHumanized}}`}</li>
-                  </ul>
-                </div>
-                <FormControl>
-                  <Textarea
-                    rows={5}
-                    {...field}
-                    onChange={(e) => {
-                      field.onChange(e);
-                      onFieldChange(field.name, e.target.value);
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          { form.watch('displayType') === 'raw' && (
+            <FormField
+              control={form.control}
+              name="rawInput"
+              render={({ field }) => (
+                <FormItem className="col-span-full">
+                  <FormLabel>
+                    Template voor display: &quot; Creëer je eigen template.&quot;
+                  </FormLabel>
+                  <div className="text-xs pb-4">
+                    <h2>Te gebruiken variabelen:</h2>
+                    <ul className="list-disc">
+                      <li className="ml-4">{`{{projectId}}`}</li>
+                      <li className="ml-4">{`{{user}} -> Bijvoorbeeld {{user.name}}`}</li>
+                      <li className="ml-4">{`{{startDateHumanized}}`}</li>
+                      <li className="ml-4">{`{{status}}`}</li>
+                      <li className="ml-4">{`{{title}}`}</li>
+                      <li className="ml-4">{`{{summary}}`}</li>
+                      <li className="ml-4">{`{{description}}`}</li>
+                      <li className="ml-4">{`{{images}} -> Bijvoorbeeld {{images[nummer].src}}`}</li>
+                      <li className="ml-4">{`{{budget}}`}</li>
+                      <li className="ml-4">{`{{extraData}}`}</li>
+                      <li className="ml-4">{`{{location}}`}</li>
+                      <li className="ml-4">{`{{modBreak}}`}</li>
+                      <li className="ml-4">{`{{modBreakDateHumanized}}`}</li>
+                      <li className="ml-4">{`{{progress}}`}</li>
+                      <li className="ml-4">{`{{createDateHumanized}}`}</li>
+                      <li className="ml-4">{`{{publishDateHumanized}}`}</li>
+                      <li className="ml-4">{`{{resource}} -> Bevat alle data van de resource`}</li>
+                    </ul>
+                    <br/>
+                    <h2>Te gebruiken filters:</h2>
+                    <ul className="list-disc">
+                      <li className="ml-4">{`{{ variable | dump }}: Laat de inhoud van een object zien.`}</li>
+                      <li
+                        className="ml-4">{`{{ variable | cleanArray }}: Maakt van een lijst een tekst met de waardes gescheiden door komma's. Bijvoorbeeld: "['Optie 1', 'Optie 2']" wordt omgezet naar: Optie 1, Optie 2`}</li>
+                      <li
+                        className="ml-4">{`{{ variable | capitalize }}: Zet de eerste letter in hoofdletters.`}</li>
+                      <li
+                        className="ml-4">{`{{ variable | truncate(10) }}: Kort een tekst in tot de opgegeven lengte. Na deze lengte wordt er '...' toegevoegd.`}</li>
+                      <li className="ml-4">{`{{ variable | lowercase }}: Zet een tekst om naar kleine letters.`}</li>
+                      <li className="ml-4">{`{{ variable | uppercase }}: Zet een tekst om naar hoofdletters.`}</li>
+                      <li
+                        className="ml-4">{`{{ variable | replace('zoek', 'vervang') }}: Vervangt een deel van de tekst door iets anders.`}</li>
+                    </ul>
+                    <br/>
+                    <h2>Overige functies:</h2>
+                    <ul className="list-disc">
+                      <li className="ml-4">{`{{ resource | tags }}: Laat alle gekoppelde tags zien gescheiden met komma's`}</li>
+                      <li className="ml-4">{`{{ resource | status }}: Laat alle gekoppelde statussen zien gescheiden met komma's`}</li>
+                    </ul>
+                  </div>
+                  <FormControl>
+                    <Textarea
+                      rows={5}
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        onFieldChange(field.name, e.target.value);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <Button className="w-fit col-span-full" type="submit">
             Opslaan

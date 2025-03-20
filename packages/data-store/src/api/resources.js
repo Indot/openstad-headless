@@ -1,13 +1,16 @@
 export default {
   fetch: async function (
-    { projectId, page, pageSize, search, tags, sort },
-    data,
+    { projectId, page, pageSize, search, tags, sort, statuses },
     options
   ) {
     const params = new URLSearchParams();
 
     if (Array.isArray(tags) && tags.length > 0) {
       tags.forEach((tag) => params.append('tags', tag));
+    }
+
+    if (Array.isArray(statuses) && statuses.length > 0) {
+      statuses.forEach((status) => params.append('statuses', status));
     }
 
     if (search) {
@@ -28,7 +31,7 @@ export default {
     }
 
     let url = `/api/project/${projectId}/resource?includeUser=1&includeUserVote=1&includeVoteCount=1&includeTags=1&includeCommentsCount=1&${params.toString()}`;
-    return this.fetch(url);
+    return this.fetch(url, options);
   },
 
   delete: async function ({ projectId, resourceId }, data) {
@@ -38,11 +41,15 @@ export default {
     return { id: data.id };
   },
 
-  create: async function ({ projectId }, data) {
+  create: async function ({ projectId, widgetId }, data) {
     delete data.id;
 
     let url = `/api/project/${projectId}/resource`;
     let method = 'POST';
+
+    if (widgetId) {
+      data.widgetId = widgetId;
+    }
 
     let body = JSON.stringify(data);
 

@@ -19,7 +19,11 @@ router.route('/')
 		if (req.query.filter || req.query.exclude) {
 			req.scope.push({method: ['filter', JSON.parse(req.query.filter), req.query.exclude]});
 		}
-		
+
+		if (req.params && req.params.projectId) {
+			req.scope.push({method: ['forProjectId', req.params.projectId]});
+		}
+
 		db.Submission
 			.scope(...req.scope)
 			.findAndCountAll({where, offset: req.dbQuery.offset, limit: req.dbQuery.limit, order: req.dbQuery.order})
@@ -41,26 +45,89 @@ router.route('/')
 // ---------------
   .post(auth.can('Submission', 'create'))
 	.post(function(req, res, next) {
-		const data = {
-			submittedData     : req.body.submittedData,
-			projectId      			: req.params.projectId,
-			widgetId      			: req.body.widgetId || null,
-			userId      			: req.user.id,
+		let data = {
+			submittedData: req.body.submittedData,
+			projectId: req.params.projectId,
+			widgetId: req.body.widgetId || null,
+			userId: req.user.id,
 		};
+
+		req.sendConfirmationToUser = data.submittedData.confirmationUser || false;
+		req.userEmailAddress = data.submittedData.userEmailAddress || '';
+		req.sendConfirmationToAdmin = data.submittedData.confirmationAdmin || false;
+		req.overwriteEmailAddress = data.submittedData.overwriteEmailAddress || '';
+		req.widgetId = data.widgetId;
+
+		delete data.submittedData.confirmationUser;
+		delete data.submittedData.userEmailAddress;
+		delete data.submittedData.confirmationAdmin;
+		delete data.submittedData.overwriteEmailAddress;
 
 		db.Submission
 			.authorizeData(data, 'create', req.user)
 			.create(data)
 			.then(result => {
 				res.json(result);
-			})
+				req.results = result
+				return next();
+			});
 	})
+	.post(async function (req, res, next) {
+		const sendConfirmationToUser = req.sendConfirmationToUser;
+		const userEmailAddress = req.userEmailAddress;
+		const sendConfirmationToAdmin = req.sendConfirmationToAdmin;
+		const overwriteEmailAddress = req.overwriteEmailAddress;
+
+		if (sendConfirmationToAdmin) {
+			const emailReceivers = overwriteEmailAddress
+				.split(',')
+				.map(email => email.trim())
+				.filter(email => email.length > 0);
+
+			const notificationData = {
+				submissionId: req.results.id,
+				widgetId: req.widgetId
+			};
+
+			if ( emailReceivers.length > 0 ) {
+				notificationData.emailReceivers = emailReceivers;
+			}
+
+			db.Notification.create({
+				type: "new enquete - admin",
+				projectId: req.project.id,
+				data: notificationData
+			})
+
+		}
+
+		if (sendConfirmationToUser) {
+			const notificationData = {
+					type: "new enquete - user",
+					projectId: req.project.id,
+					data: {
+						submissionId: req.results.id,
+						widgetId: req.widgetId
+					}
+			};
+
+			if ( !!userEmailAddress ) {
+				notificationData.to = userEmailAddress;
+			} else {
+				notificationData.data.userId = req?.user?.id || 0
+			}
+
+			if (userEmailAddress || notificationData.data.userId) {
+				db.Notification.create(notificationData)
+			}
+		}
+	});
 
 	// with one existing submission
 	// --------------------------
-	router.route('/:submissionId(\\d+)')
+	router.route('/:submissionId([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})')
 		.all(function(req, res, next) {
-			var submissionId = parseInt(req.params.submissionId);
+			var submissionId = req.params.submissionId;
 
 			req.scope = ['defaultScope'];
 			req.scope.push({method: ['forProjectId', req.params.projectId]});

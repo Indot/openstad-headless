@@ -1,16 +1,57 @@
 import { TileLayer as LeafletTileLayer } from 'react-leaflet'
 import type { MapTilesProps } from './types/map-tiles-props';
+import { useEffect, useState } from 'react';
 
 export default function TileLayer({
   tilesVariant = 'default',
   tiles = null,
   minZoom = 0,
   maxZoom = 25,
+	customUrl = '',
   ...props
 }: MapTilesProps) {
+	const [activeTiles, setActiveTiles] = useState(tilesVariant);
+	const [isChecking, setIsChecking] = useState(true);
 
-  switch(tilesVariant) {
+	useEffect(() => {
+		if (tilesVariant === 'nlmaps') {
+			const testUrl = `https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/standaard/EPSG:3857/10/550/340.png`;
 
+			const checkService = async () => {
+				try {
+					const controller = new AbortController();
+					const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+					const response = await fetch(testUrl, {
+						method: 'HEAD',
+						signal: controller.signal,
+					});
+
+					clearTimeout(timeoutId);
+
+					if (!response.ok) {
+						setActiveTiles('openstreetmaps');
+						setIsChecking(false);
+					} else {
+						setIsChecking(false);
+					}
+				} catch (error) {
+					setActiveTiles('openstreetmaps');
+					setIsChecking(false);
+				}
+			};
+
+			checkService();
+		} else {
+			setIsChecking(false);
+		}
+	}, [tilesVariant]);
+
+	if (isChecking) {
+		return null;
+	}
+
+	switch (activeTiles) {
 		case "amaps":
       return (
 				<LeafletTileLayer
@@ -52,7 +93,7 @@ export default function TileLayer({
 	      maxZoom={ typeof maxZoom != 'undefined' ? maxZoom : 19 }
 	      minZoom={ typeof minZoom != 'undefined' ? minZoom : 0 }
         subdomains={tiles && tiles.subdomains || ''}
-        url={tiles && tiles.url || 'https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/standaard/EPSG:3857/{z}/{x}/{y}.png'}
+        url={customUrl || 'https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/standaard/EPSG:3857/{z}/{x}/{y}.png'}
           />)
 
 		default:

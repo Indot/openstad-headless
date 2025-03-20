@@ -24,7 +24,7 @@ export function SidenavProject({ className }: { className?: string }) {
         className
       )}>
       <div className="flex flex-col items-start justify-center h-24">
-        <Link href="/projects">
+        <Link href="javascript:history.back();">
           <div className="m-4 p-3 bg-secondary rounded">
             <ArrowLeft size={20} />
           </div>
@@ -44,7 +44,7 @@ export function SidenavProject({ className }: { className?: string }) {
             variant={location.includes('/settings') ? 'secondary' : 'ghost'}
             size="default"
             className="w-full flex justify-between">
-            <span className="truncate">Instellingen</span>
+            <span className="truncate">Projectinstellingen</span>
             <ChevronDown
               size={16}
             />
@@ -101,7 +101,7 @@ export function SidenavProject({ className }: { className?: string }) {
                 }
                 size="default"
                 className="w-full flex justify-start pl-8">
-                <span className="truncate">Administrator notificaties</span>
+                <span className="truncate">E-mail instellingen</span>
               </Button>
             </Link>
             <Link href={`/projects/${project}/settings/resource`}>
@@ -113,7 +113,43 @@ export function SidenavProject({ className }: { className?: string }) {
                 }
                 size="default"
                 className="w-full flex justify-start pl-8">
-                <span className="truncate">Resource instellingen</span>
+                <span className="truncate">Inzendingsinstellingen</span>
+              </Button>
+            </Link>
+            <Link href={`/projects/${project}/settings/map`}>
+              <Button
+                variant={
+                  location.includes('/settings/map')
+                    ? 'secondary'
+                    : 'ghost'
+                }
+                size="default"
+                className="w-full flex justify-start pl-8">
+                <span className="truncate">Kaart instellingen</span>
+              </Button>
+            </Link>
+            <Link href={`/projects/${project}/settings/alloweddomains`}>
+              <Button
+                variant={
+                  location.includes('/settings/alloweddomains')
+                    ? 'secondary'
+                    : 'ghost'
+                }
+                size="default"
+                className="w-full flex justify-start pl-8">
+                <span className="truncate">Toegestane websites</span>
+              </Button>
+            </Link>
+            <Link href={`/projects/${project}/settings/design`}>
+              <Button
+                variant={
+                  location.includes('/settings/design')
+                    ? 'secondary'
+                    : 'ghost'
+                }
+                size="default"
+                className="w-full flex justify-start pl-8">
+                <span className="truncate">Vormgeving</span>
               </Button>
             </Link>
           </>
@@ -186,7 +222,7 @@ export function SidenavProject({ className }: { className?: string }) {
             variant={location.includes('/resources') ? 'secondary' : 'ghost'}
             className="w-full flex justify-start"
             onClick={(e) => {}}>
-            <span className="truncate">Resources</span>
+            <span className="truncate">Inzendingen</span>
           </Button>
         </Link>
         <Link href={`/projects/${project}/unique-codes`}>
@@ -226,7 +262,7 @@ export function SidenavProject({ className }: { className?: string }) {
             variant={location.includes('/statuses') ? 'secondary' : 'ghost'}
             className="w-full flex justify-start"
             onClick={(e) => {}}>
-            <span className="truncate">Statuses</span>
+            <span className="truncate">Statussen</span>
           </Button>
         </Link>
         <Link href={`/projects/${project}/comments`}>
@@ -234,7 +270,23 @@ export function SidenavProject({ className }: { className?: string }) {
             variant={location.includes('/comments') ? 'secondary' : 'ghost'}
             className="w-full flex justify-start"
             onClick={(e) => {}}>
-            <span className="truncate">Argumenten</span>
+            <span className="truncate">Reacties</span>
+          </Button>
+        </Link>
+        <Link href={`/projects/${project}/submissions`}>
+          <Button
+            variant={location.includes('/submissions') ? 'secondary' : 'ghost'}
+            className="w-full flex justify-start"
+            onClick={(e) => {}}>
+            <span className="truncate">Formulier inzendingen</span>
+          </Button>
+        </Link>
+        <Link href={`/projects/${project}/choiceguide-results`}>
+          <Button
+            variant={location.includes('/choiceguide-results') ? 'secondary' : 'ghost'}
+            className="w-full flex justify-start"
+            onClick={(e) => {}}>
+            <span className="truncate">Keuzewijzer inzendingen</span>
           </Button>
         </Link>
         <Link href={`/projects/${project}/notifications`}>
@@ -244,7 +296,7 @@ export function SidenavProject({ className }: { className?: string }) {
             }
             size="default"
             className="w-full flex justify-start">
-            <span className="truncate">Notificaties</span>
+            <span className="truncate">Notificaties en e-mails</span>
           </Button>
         </Link>
         <Link href={`/projects/${project}/duplicate`}>

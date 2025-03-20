@@ -23,6 +23,14 @@ import {
   WithApiUrlProps,
   withApiUrl,
 } from '@/lib/server-side-props-definition';
+import WidgetResourcesMapContent from '../../resourcesmap/[id]/content';
+import WidgetResourcesMapMap from '../../resourcesmap/[id]/map';
+import { ResourceOverviewMapWidgetTabProps } from '../../resourcesmap/[id]';
+import WidgetResourcesMapButton from '../../resourcesmap/[id]/buttons';
+import WidgetResourcesMapPolygons from '../../resourcesmap/[id]/polygons';
+import { extractConfig } from '@/lib/sub-widget-helper';
+import LikesDisplay from "@/pages/projects/[project]/widgets/likes/[id]/weergave";
+import {LikeWidgetTabProps} from "@/pages/projects/[project]/widgets/likes/[id]";
 
 export const getServerSideProps = withApiUrl;
 
@@ -45,6 +53,7 @@ export default function WidgetResourceOverview({ apiUrl }: WithApiUrlProps) {
       updateConfig({ ...widget.config, ...config }),
 
     onFieldChanged: (key: string, value: any) => {
+      console.log('onFieldChanged', key, value);
       if (previewConfig) {
         updatePreview({
           ...previewConfig,
@@ -58,7 +67,7 @@ export default function WidgetResourceOverview({ apiUrl }: WithApiUrlProps) {
   return (
     <div>
       <PageLayout
-        pageHeader="Project naam"
+        pageHeader="Projectnaam"
         breadcrumbs={[
           {
             name: 'Projecten',
@@ -69,7 +78,7 @@ export default function WidgetResourceOverview({ apiUrl }: WithApiUrlProps) {
             url: `/projects/${projectId}/widgets`,
           },
           {
-            name: 'Resource Overview',
+            name: 'Inzending overzicht tegels',
             url: `/projects/${projectId}/widgets/resourceoverview/${id}`,
           },
         ]}>
@@ -77,12 +86,14 @@ export default function WidgetResourceOverview({ apiUrl }: WithApiUrlProps) {
           <Tabs defaultValue="general">
             <TabsList className="w-full bg-white border-b-0 mb-4 rounded-md h-fit flex flex-wrap overflow-auto">
               <TabsTrigger value="general">Algemeen</TabsTrigger>
-              <TabsTrigger value="display">Display</TabsTrigger>
+              <TabsTrigger value="display">Weergave</TabsTrigger>
+              <TabsTrigger value="map">Kaart widget</TabsTrigger>
               <TabsTrigger value="tags">Tags</TabsTrigger>
               <TabsTrigger value="search">Zoeken</TabsTrigger>
               <TabsTrigger value="sorting">Sorteren</TabsTrigger>
-              <TabsTrigger value="pagination">Pagination</TabsTrigger>
+              <TabsTrigger value="pagination">Paginering</TabsTrigger>
               <TabsTrigger value="include">Inclusief/exclusief</TabsTrigger>
+              <TabsTrigger value="likes">Likes widget</TabsTrigger>
               <TabsTrigger value="publish">Publiceren</TabsTrigger>
             </TabsList>
             {previewConfig ? (
@@ -93,6 +104,56 @@ export default function WidgetResourceOverview({ apiUrl }: WithApiUrlProps) {
                 <TabsContent value="display" className="p-0">
                   <WidgetResourceOverviewDisplay {...totalPropPackage} />
                 </TabsContent>
+
+                <TabsContent value="map" className="p-0">
+                  <Tabs defaultValue="general">
+                    <TabsList className="w-full bg-white border-b-0 mb-4 rounded-md h-fit flex flex-wrap overflow-auto">
+                      <TabsTrigger value="general">Kaart</TabsTrigger>
+                      <TabsTrigger value="polygons">Polygonen</TabsTrigger>
+                      <TabsTrigger value="buttons">Knoppen</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="general" className="p-0">
+                      <WidgetResourcesMapMap
+                        {...extractConfig<
+                          ResourceOverviewWidgetProps,
+                          ResourceOverviewMapWidgetTabProps
+                        >({
+                          previewConfig: previewConfig,
+                          subWidgetKey: 'resourceOverviewMapWidget',
+                          updateConfig,
+                          updatePreview,
+                        })}
+                      />
+                    </TabsContent>
+                    <TabsContent value="buttons" className="p-0">
+                      <WidgetResourcesMapButton
+                        {...extractConfig<
+                          ResourceOverviewWidgetProps,
+                          ResourceOverviewMapWidgetTabProps
+                        >({
+                          previewConfig: previewConfig,
+                          subWidgetKey: 'resourceOverviewMapWidget',
+                          updateConfig,
+                          updatePreview,
+                        })}
+                      />
+                    </TabsContent>
+                    <TabsContent value="polygons" className="p-0">
+                      <WidgetResourcesMapPolygons
+                        {...extractConfig<
+                          ResourceOverviewWidgetProps,
+                          ResourceOverviewMapWidgetTabProps
+                        >({
+                          previewConfig,
+                          subWidgetKey: 'resourceOverviewMapWidget',
+                          updateConfig,
+                          updatePreview,
+                        })}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </TabsContent>
+
                 <TabsContent value="sorting" className="p-0">
                   <WidgetResourceOverviewSorting {...totalPropPackage} />
                 </TabsContent>
@@ -107,6 +168,28 @@ export default function WidgetResourceOverview({ apiUrl }: WithApiUrlProps) {
                 </TabsContent>
                 <TabsContent value="include" className="p-0">
                   <WidgetResourceOverviewInclude {...totalPropPackage} />
+                </TabsContent>
+                <TabsContent value="likes" className="p-0">
+                  {previewConfig && (
+                    <>
+                    <p style={{backgroundColor: 'orange', color: 'white', fontSize: '14px',  fontWeight: 'bold', marginBottom: '5px', padding: '5px 10px', width: 'auto', display: 'inline-block', borderRadius: '6px'}}>
+                      Let op! Deze instellingen zijn voor het type weergave &apos;Inzendingen op de huidige pagina tonen, in een dialog.&apos;<br />
+                      Bij het tabje &apos;Weergave&apos; moet je ook aangevinkt hebben dat je likes wilt tonen.
+                      Als beide niet zo zijn ingesteld, dan zullen de likes niet getoond worden.
+                    </p>
+                      <LikesDisplay
+                          omitSchemaKeys={['resourceId']}
+                          {...extractConfig<
+                              ResourceOverviewWidgetProps,
+                              LikeWidgetTabProps
+                          >({
+                            subWidgetKey: 'resourceOverviewMapWidget',
+                            previewConfig: previewConfig,
+                            updateConfig,
+                            updatePreview,
+                          })}
+                      /></>
+                  )}
                 </TabsContent>
                 <TabsContent value="publish" className="p-0">
                   <WidgetPublish apiUrl={apiUrl} />

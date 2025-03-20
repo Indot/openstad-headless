@@ -5,11 +5,12 @@ const contentWidgets = {
   'openstad-title': {},
   'openstad-accordion': {},
   'openstad-button': {},
-  'openstad-alertbox': {},
-  'openstad-sharelinks': {},
+  'openstad-alertBox': {},
+  'openstad-shareLinks': {},
   'openstad-timeline': {},
   'openstad-image': {},
   'openstad-iconSection': {},
+  'openstad-carousel': {},
 };
 
 module.exports = {
@@ -162,6 +163,12 @@ module.exports = {
         textarea: true,
         label: 'Custom CSS',
         help: 'Voeg custom CSS toe aan de sectie',
+      },
+
+      removeTopMargin: {
+        type: 'boolean',
+        label: 'Witruimte boven sectie verwijderen',
+        def: false,
       },
 
       negativeMargin: {

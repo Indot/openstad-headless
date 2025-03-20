@@ -8,7 +8,7 @@ metadata:
     {{- include "openstad.labels" . | nindent 4 }}
     app.kubernetes.io/component: {{ template "openstad.auth.fullname" . }}-deployment
 spec:
-  replicas: {{ .Values.auth.replicas }}
+  replicas: {{ .Values.auth.replicas | default 1 }}
   selector:
     matchLabels:
       app: {{ .Values.auth.label }}
@@ -36,6 +36,12 @@ spec:
           # HOSTING
           - name: APP_URL
             value: https://{{ template "openstad.auth.url" . }}
+
+          - name: CMS_URL
+            value: https://{{ template "openstad.cms.url" . }}
+
+          - name: BASE_DOMAIN
+            value: {{ .Values.host.base }}
 
           - name: PORT
             value: "{{ .Values.auth.service.httpPort }}"
@@ -183,7 +189,7 @@ spec:
         image: {{ .Values.auth.deploymentContainer.image }}
         command: ["/bin/bash", "-c"]
         args:
-          - nc $DB_HOST $DB_PORT -z -w1 && npm run --prefix apps/auth-server migrate-database
+          - nc $DB_HOST $DB_PORT -z -w1 && npm run --prefix apps/auth-server init-database -- --only-if-empty && npm run --prefix apps/auth-server migrate-database
         env:
           - name: DB_USER
             valueFrom:
@@ -208,6 +214,12 @@ spec:
               secretKeyRef:
                 name: openstad-db-credentials
                 key: hostport
+
+          - name: DB_MAX_POOL_SIZE
+            valueFrom:
+              secretKeyRef:
+                name: openstad-db-credentials
+                key: maxPoolSize
 
           - name: DB_NAME
             valueFrom:

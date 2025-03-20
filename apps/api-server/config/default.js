@@ -42,6 +42,8 @@ let defaultConfig = {
     mysqlSTGeoMode: process.env.DB_MYSQL_CA_CERT || process.env.API_DB_MYSQL_CA_CERTMYSQL_CA_CERT || process.env.MYSQL_ST_GEO_MODE,
     mysqlCaCert: process.env.DB_MYSQL_CA_CERT || process.env.API_DB_MYSQL_CA_CERT || process.env.MYSQL_CA_CERT,
     multipleStatements: true,
+    requireSsl: process.env.DB_REQUIRE_SSL || false,
+    authMethod: process.env.DB_AUTH_METHOD,
   },
 
 	express: {
@@ -61,7 +63,7 @@ let defaultConfig = {
 	},
 
 	mail: {
-	  from: process.env.FROM_EMAIL_ADDRESS || process.env.API_EMAILADDRESS || 'info@openstad.org',
+	  from: process.env.FROM_EMAIL_ADDRESS || process.env.API_EMAILADDRESS || 'email@not.set',
 		method: 'smtp',
 		transport: {
 			smtp: {
@@ -99,6 +101,12 @@ Als de webmaster de website gesloten heeft is deze in principe nog wel te bezoek
 `
     },
 	},
+
+  messageStreaming: {
+    redis: {
+      url: process.env.MESSAGESTREAMING_REDIS_URL,
+    }
+  },
 
   auth: AUTH || {
     jwtSecret: AUTH_JWTSECRET || 'REPLACE THIS VALUE!!',

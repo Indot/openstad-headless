@@ -53,17 +53,26 @@ router.use( '/project/:projectId(\\d+)/action', require('./action') );
 router.use('/project/:projectId(\\d+)/widgets', require('./widget') );
 router.use('/project/:projectId(\\d+)/widgets/:id(\\d+)', require('./widget') );
 
+
+router.use('/project/:projectId(\\d+)/upload', require('./upload'));
+
 // locks
 router.use( '/lock', require('./lock') );
 
 // To do test and fix log API
 //router.use( '/project/:projectId(\\d+)/log', require('./log') );
 
+
 router.use( '/image', require('./image-verification-link') );
+
+router.use( '/document', require('./document-verification-link') );
 
 // area on project and no project route, system wide the same
 router.use( '/project/:projectId(\\d+)/area', require('./area') );
 router.use( '/area', require('./area') );
+
+router.use( '/project/:projectId(\\d+)/datalayer', require('./datalayer') );
+router.use( '/datalayer', require('./datalayer') );
 
 router.use( '/repo', require('./template') ); // backwards compatibility
 router.use( '/template', require('./template') );

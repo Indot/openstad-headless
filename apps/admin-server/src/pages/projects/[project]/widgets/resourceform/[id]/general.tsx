@@ -33,7 +33,12 @@ const formSchema = z.object({
     'submission',
   ]),
   formName: z.string(),
-  redirectUrl: z.string().url(),
+  redirectUrl: z.string().refine(value =>
+    /^(\/[^\s]*)|(https?:\/\/[^\s]*)$/i.test(value),
+    {
+      message: "Must be a valid URL or a relative path",
+    }
+  ),
   hideAdmin: z.boolean(),
   // organiseForm: z.enum(['static', 'staticAppended', 'dynamic']),
 });
@@ -90,7 +95,7 @@ export default function WidgetResourceFormGeneral() {
             name="resource"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Resource type (vanuit de config)</FormLabel>
+                <FormLabel>Soort inzending (vanuit de configuratie)</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -98,13 +103,13 @@ export default function WidgetResourceFormGeneral() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="resource">Resource</SelectItem>
+                    <SelectItem value="resource">Inzending</SelectItem>
                     <SelectItem value="article">Artikel</SelectItem>
                     <SelectItem value="activeUser">
                       Actieve gebruiker
                     </SelectItem>
                     <SelectItem value="resourceUser">
-                      Gebruiker van de resource
+                      Gebruiker van de inzending
                     </SelectItem>
                     <SelectItem value="submission">Oplevering</SelectItem>
                   </SelectContent>
@@ -135,8 +140,7 @@ export default function WidgetResourceFormGeneral() {
             render={({ field }) => (
               <FormItem className="col-span-full">
                 <FormLabel>
-                  De URL waar de gebruiker naartoe wordt geleid na het invullen
-                  van het formulier.
+                  Naar welke URL moet de gebruiker geleid worden na het invullen van het formulier?
                 </FormLabel>
                 <FormControl>
                   <Input {...field} />

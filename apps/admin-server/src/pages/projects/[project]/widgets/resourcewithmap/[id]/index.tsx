@@ -9,7 +9,7 @@ import {
 import { useRouter } from 'next/router';
 import { useWidgetConfig } from '@/hooks/use-widget-config';
 import { useWidgetPreview } from '@/hooks/useWidgetPreview';
-import { ResourceOverviewWithMapWidgetProps } from '@openstad-headless/resource-overview-with-map/src/resourceOverviewWithMap';
+import { ResourceOverviewWidgetProps } from '@openstad-headless/resource-overview/src/resource-overview';
 import WidgetPreview from '@/components/widget-preview';
 import WidgetPublish from '@/components/widget-publish';
 import {
@@ -23,11 +23,12 @@ import WidgetResourceOverviewInclude from '../../resourceoverview/[id]/include';
 import WidgetResourceOverviewPagination from '../../resourceoverview/[id]/pagination';
 import WidgetResourceOverviewSorting from '../../resourceoverview/[id]/sorting';
 import WidgetResourceOverviewTags from '../../resourceoverview/[id]/tags';
-import { EditFieldProps } from '@/lib/form-widget-helpers/EditFieldProps';
 import WidgetResourcesMapMap from '../../resourcesmap/[id]/map';
 import WidgetResourcesMapButtons from '../../resourcesmap/[id]/buttons';
-import { ResourceOverviewWidgetProps } from '@openstad-headless/resource-overview/src/resource-overview';
-import { ResourceOverviewMapWidgetProps } from '@openstad-headless/leaflet-map/src/types/resource-overview-map-widget-props';
+import WidgetResourcesMapPolygons from '../../resourcesmap/[id]/polygons';
+import WidgetResourcesMapDatalayers from '../../resourcesmap/[id]/datalayers';
+import { extractConfig } from '@/lib/sub-widget-helper';
+import { ResourceOverviewMapWidgetTabProps } from '../../resourcesmap/[id]';
 
 export const getServerSideProps = withApiUrl;
 
@@ -37,9 +38,9 @@ export default function WidgetResourceOverview({ apiUrl }: WithApiUrlProps) {
   const projectId = router.query.project as string;
 
   const { data: widget, updateConfig } =
-    useWidgetConfig<ResourceOverviewWithMapWidgetProps>();
+    useWidgetConfig<ResourceOverviewWidgetProps>();
   const { previewConfig, updatePreview } =
-    useWidgetPreview<ResourceOverviewWithMapWidgetProps>({
+    useWidgetPreview<ResourceOverviewWidgetProps>({
       projectId,
     });
 
@@ -60,28 +61,10 @@ export default function WidgetResourceOverview({ apiUrl }: WithApiUrlProps) {
     projectId,
   };
 
-  const totalPropPackageMap: ResourceOverviewMapWidgetProps & EditFieldProps<ResourceOverviewMapWidgetProps> = {
-    ...(widget?.config || {}),
-    ...(previewConfig || {}),
-    updateConfig: (config: ResourceOverviewMapWidgetProps) =>
-      updateConfig({ ...(widget?.config || {}), ...config }),
-
-
-    onFieldChanged: (key: string, value: any) => {
-      if (previewConfig) {
-        updatePreview({
-          ...previewConfig,
-          [key]: value,
-        });
-      }
-    },
-    projectId,
-  };
-
   return (
     <div>
       <PageLayout
-        pageHeader="Project naam"
+        pageHeader="Projectnaam"
         breadcrumbs={[
           {
             name: 'Projecten',
@@ -92,8 +75,8 @@ export default function WidgetResourceOverview({ apiUrl }: WithApiUrlProps) {
             url: `/projects/${projectId}/widgets`,
           },
           {
-            name: 'Resource Overview',
-            url: `/projects/${projectId}/widgets/resourceoverview/${id}`,
+            name: 'Interactieve kaart',
+            url: `/projects/${projectId}/widgets/resourcewithmap/${id}`,
           },
         ]}>
         <div className="container py-6">
@@ -109,33 +92,49 @@ export default function WidgetResourceOverview({ apiUrl }: WithApiUrlProps) {
                   <Tabs defaultValue="general">
                     <TabsList className="w-full bg-white border-b-0 mb-4 rounded-md h-fit flex flex-wrap overflow-auto">
                       <TabsTrigger value="general">Algemeen</TabsTrigger>
-                      <TabsTrigger value="display">Display</TabsTrigger>
+                      <TabsTrigger value="display">Weergave</TabsTrigger>
                       <TabsTrigger value="tags">Tags</TabsTrigger>
                       <TabsTrigger value="search">Zoeken</TabsTrigger>
                       <TabsTrigger value="sorting">Sorteren</TabsTrigger>
-                      <TabsTrigger value="pagination">Pagination</TabsTrigger>
-                      <TabsTrigger value="include">Inclusief/exclusief</TabsTrigger>
+                      <TabsTrigger value="pagination">Paginering</TabsTrigger>
+                      <TabsTrigger value="include">
+                        Inclusief/exclusief
+                      </TabsTrigger>
                     </TabsList>
                     <TabsContent value="general" className="p-0">
-                      <WidgetResourceOverviewGeneral {...totalPropPackageOverview} />
+                      <WidgetResourceOverviewGeneral
+                        {...totalPropPackageOverview}
+                      />
                     </TabsContent>
                     <TabsContent value="display" className="p-0">
-                      <WidgetResourceOverviewDisplay {...totalPropPackageOverview} />
+                      <WidgetResourceOverviewDisplay
+                        {...totalPropPackageOverview}
+                      />
                     </TabsContent>
                     <TabsContent value="sorting" className="p-0">
-                      <WidgetResourceOverviewSorting {...totalPropPackageOverview} />
+                      <WidgetResourceOverviewSorting
+                        {...totalPropPackageOverview}
+                      />
                     </TabsContent>
                     <TabsContent value="pagination" className="p-0">
-                      <WidgetResourceOverviewPagination {...totalPropPackageOverview} />
+                      <WidgetResourceOverviewPagination
+                        {...totalPropPackageOverview}
+                      />
                     </TabsContent>
                     <TabsContent value="search" className="p-0">
-                      <WidgetResourceOverviewSearch {...totalPropPackageOverview} />
+                      <WidgetResourceOverviewSearch
+                        {...totalPropPackageOverview}
+                      />
                     </TabsContent>
                     <TabsContent value="tags" className="p-0">
-                      <WidgetResourceOverviewTags {...totalPropPackageOverview} />
+                      <WidgetResourceOverviewTags
+                        {...totalPropPackageOverview}
+                      />
                     </TabsContent>
                     <TabsContent value="include" className="p-0">
-                      <WidgetResourceOverviewInclude {...totalPropPackageOverview} />
+                      <WidgetResourceOverviewInclude
+                        {...totalPropPackageOverview}
+                      />
                     </TabsContent>
                     <TabsContent value="publish" className="p-0">
                       <WidgetPublish apiUrl={apiUrl} />
@@ -146,23 +145,68 @@ export default function WidgetResourceOverview({ apiUrl }: WithApiUrlProps) {
                   <Tabs defaultValue="map">
                     <TabsList className="w-full bg-white border-b-0 mb-4 rounded-md">
                       <TabsTrigger value="map">Kaart</TabsTrigger>
+                      <TabsTrigger value="polygons">Polygonen</TabsTrigger>
+                      <TabsTrigger value="datalayers">Kaartlagen</TabsTrigger>
                       <TabsTrigger value="button">Knoppen</TabsTrigger>
                     </TabsList>
 
-
                     <TabsContent value="map" className="p-0">
-                      <WidgetResourcesMapMap {...totalPropPackageMap} />
+                      <WidgetResourcesMapMap
+                        {...extractConfig<
+                          ResourceOverviewWidgetProps,
+                          ResourceOverviewMapWidgetTabProps
+                        >({
+                          previewConfig,
+                          subWidgetKey: 'resourceOverviewMapWidget',
+                          updateConfig,
+                          updatePreview,
+                        })}
+                      />
                     </TabsContent>
                     <TabsContent value="button" className="p-0">
-                      <WidgetResourcesMapButtons {...totalPropPackageMap} />
+                      <WidgetResourcesMapButtons
+                        {...extractConfig<
+                          ResourceOverviewWidgetProps,
+                          ResourceOverviewMapWidgetTabProps
+                        >({
+                          previewConfig,
+                          subWidgetKey: 'resourceOverviewMapWidget',
+                          updateConfig,
+                          updatePreview,
+                        })}
+                      />
                     </TabsContent>
-
+                    <TabsContent value="polygons" className="p-0">
+                      <WidgetResourcesMapPolygons
+                        {...extractConfig<
+                          ResourceOverviewWidgetProps,
+                          ResourceOverviewMapWidgetTabProps
+                        >({
+                          previewConfig,
+                          subWidgetKey: 'resourceOverviewMapWidget',
+                          updateConfig,
+                          updatePreview,
+                        })}
+                      />
+                    </TabsContent>
+                    <TabsContent value="datalayers" className="p-0">
+                      <WidgetResourcesMapDatalayers
+                        {...extractConfig<
+                          ResourceOverviewWidgetProps,
+                          ResourceOverviewMapWidgetTabProps
+                        >({
+                          previewConfig,
+                          subWidgetKey: 'resourceOverviewMapWidget',
+                          updateConfig,
+                          updatePreview,
+                        })}
+                      />
+                    </TabsContent>
                   </Tabs>
                 </TabsContent>
                 <TabsContent value="publish" className="p-0">
                   <WidgetPublish apiUrl={apiUrl} />
                 </TabsContent>
-
               </>
             ) : null}
           </Tabs>

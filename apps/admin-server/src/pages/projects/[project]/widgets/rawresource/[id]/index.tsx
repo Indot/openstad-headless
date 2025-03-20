@@ -33,7 +33,7 @@ export default function WidgetRawResource({ apiUrl }: WithApiUrlProps) {
   return (
     <div>
       <PageLayout
-        pageHeader="Project naam"
+        pageHeader="Projectnaam"
         breadcrumbs={[
           {
             name: 'Projecten',
@@ -44,7 +44,7 @@ export default function WidgetRawResource({ apiUrl }: WithApiUrlProps) {
             url: `/projects/${projectId}/widgets`,
           },
           {
-            name: 'Raw Resource',
+            name: 'Inzending maatwerk',
             url: `/projects/${projectId}/widgets/rawresource/${id}`,
           },
         ]}>

@@ -51,7 +51,7 @@ export default function WidgetResourceDetailMap({
   return (
     <div>
       <PageLayout
-        pageHeader="Project naam"
+        pageHeader="Projectnaam"
         breadcrumbs={[
           {
             name: 'Projecten',
@@ -62,7 +62,7 @@ export default function WidgetResourceDetailMap({
             url: `/projects/${projectId}/widgets`,
           },
           {
-            name: 'Resources detail map',
+            name: 'Inzending overzicht kaart',
             url: `/projects/${projectId}/widgets/resourcedetailmap/${id}`,
           },
         ]}>

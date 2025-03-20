@@ -16,6 +16,7 @@ import { MoreHorizontal } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useUniqueCodes from '@/hooks/use-unique-codes';
 import { searchTable, sortTable } from '@/components/ui/sortTable';
+import * as XLSX from 'xlsx';
 
 const headers = [
   { label: "ID", key: "id" },
@@ -29,7 +30,23 @@ export default function ProjectCodes() {
 
 
   const [filterData, setFilterData] = useState(uniquecodes?.data);
-  const debouncedSearchTable = searchTable(setFilterData);
+  const [filterSearchType, setFilterSearchType] = useState<string>('');
+  const debouncedSearchTable = searchTable(setFilterData, filterSearchType);
+
+  const exportData = (data: any[], fileName: string) => {
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+    XLSX.writeFile(workbook, fileName);
+  };
+
+  function transform() {
+    const today = new Date();
+    const projectId = router.query.project;
+    const formattedDate = today.toISOString().split('T')[0].replace(/-/g, '');
+    exportData(uniquecodes.data, `${projectId}_stemcodes_${formattedDate}.xlsx`);
+  }
 
   useEffect(() => {
     setFilterData(uniquecodes?.data);
@@ -52,27 +69,37 @@ export default function ProjectCodes() {
           },
         ]}
         action={
-          <div className="flex flex-row w-full md:w-auto my-auto">
+          <div className='flex flex-row w-full md:w-auto my-auto gap-4'>
             <Link href={`/projects/${project}/unique-codes/create`}>
               <Button variant="default" className="text-xs p-2 w-fit">
                 <Plus size="20" className="hidden md:flex" />
                 Stemcodes toevoegen
               </Button>
             </Link>
-            <Button variant="default" className="text-xs p-2 w-fit">
-              <CSVLink data={uniquecodes.data} headers={headers}>
-                Exporteer stemcodes
-              </CSVLink>
+            <Button className="text-xs p-2 w-fit" type="submit" onClick={transform}>
+              Exporteer stemcodes
             </Button>
           </div>
         }>
         <div className="container py-6">
-        <input
-            type="text"
-            className='mb-4 p-2 rounded float-right'
-            placeholder="Zoeken..."
-            onChange={(e) => debouncedSearchTable(e.target.value, filterData, uniquecodes?.data)}
-          />
+        <div className="float-right mb-4 flex gap-4">
+            <p className="text-xs font-medium text-muted-foreground self-center">Filter op:</p>
+            <select
+              className="p-2 rounded"
+              onChange={(e) => setFilterSearchType(e.target.value)}
+            >
+              <option value="">Alles</option>
+              <option value="id">Stem ID</option>
+              <option value="code">Code</option>
+              <option value="userId">Gebruikt</option>
+            </select>
+            <input
+              type="text"
+              className='p-2 rounded'
+              placeholder="Zoeken..."
+              onChange={(e) => debouncedSearchTable(e.target.value, filterData, uniquecodes?.data)}
+            />
+          </div>
 
           <div className="p-6 bg-white rounded-md clear-right">
             <div className="grid grid-cols-1 lg:grid-cols-4 items-center py-2 px-2 border-b border-border">

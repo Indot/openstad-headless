@@ -13,7 +13,11 @@ function CommentForm({
   descriptionMinLength = 30,
   descriptionMaxLength = 500,
   formIntro = 'Test',
-  placeholder = 'Type hier uw reactie',
+  placeholder = 'Typ hier uw reactie',
+  parentId = 0,
+  activeMode = '',
+  sentiment = '',
+  disableSubmit = false,
   ...props
 }: CommentFormProps) {
   const commentsContext = useContext(CommentWidgetContext);
@@ -37,13 +41,32 @@ function CommentForm({
     requiredWarning: 'Dit veld is verplicht',
     fieldKey: 'description',
     placeholder: commentsContext?.placeholder,
-    defaultValue: args.comment?.description,
+    defaultValue: !parentId ? args.comment?.description : '',
+  });
+
+  formFields.push({
+    type: 'hidden',
+    fieldKey: 'sentiment',
+    defaultValue: sentiment,
   });
 
   if (
     typeof args.comment !== 'undefined' &&
+    !!parentId &&
+    activeMode === 'reply'
+  ) {
+    formFields.push({
+      type: 'hidden',
+      fieldKey: 'parentId',
+      defaultValue: parentId.toString(),
+    });
+  }
+
+  if (
+    typeof args.comment !== 'undefined' &&
     typeof args.comment.parentId !== 'undefined' &&
-    args.comment.parentId !== null
+    !!args.comment.parentId &&
+    activeMode === 'edit'
   ) {
     formFields.push({
       type: 'hidden',
@@ -54,7 +77,8 @@ function CommentForm({
 
   if (
     typeof args.comment !== 'undefined' &&
-    typeof args.comment.id !== 'undefined'
+    typeof args.comment.id !== 'undefined' &&
+    activeMode === 'edit'
   ) {
     formFields.push({
       type: 'hidden',
@@ -74,6 +98,7 @@ function CommentForm({
       {args.formIntro && <p>{args.formIntro}</p>}
       <Form
         fields={formFields}
+        submitDisabled={disableSubmit}
         submitHandler={props.submitComment}
         submitText="Verstuur"
         title=""

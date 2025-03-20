@@ -108,14 +108,6 @@ module.exports = {
       extraData: {
         type: 'object',
       },
-      defaultStatusIds: {
-        type: 'arrayOfNumbers',
-        default: [],
-      },
-      defaultTagIds: {
-        type: 'arrayOfNumbers',
-        default: [],
-      },
     },
   },
 
@@ -204,7 +196,7 @@ module.exports = {
       },
       voteType: {
         type: 'enum',
-        values: ['likes', 'count', 'budgeting', 'count-per-theme', 'budgeting-per-theme'],
+        values: ['likes', 'count', 'budgeting', 'countPerTag', 'budgetingPerTag', 'countPerTheme', 'budgetingPerTheme'],
         default: 'likes',
       },
       voteValues: {
@@ -280,6 +272,24 @@ module.exports = {
       visibleWidgets: {
         type: "arrayOfStrings",
         default: []
+      }
+    }
+  },
+
+  map: {
+    type: "object",
+    subset: {
+      minZoom: {
+        type: "string",
+        default: '7',
+      },
+      maxZoom: {
+        type: "string",
+        default: '20',
+      },
+      areaId: {
+        type: 'string',
+        default: '0',
       }
     }
   },

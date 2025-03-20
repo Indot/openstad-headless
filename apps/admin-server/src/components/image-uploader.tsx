@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { FieldValues, Path, UseFormReturn, useForm } from 'react-hook-form';
 import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    FormControl, FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from './ui/form';
 import { Input } from './ui/input';
 
@@ -13,7 +13,11 @@ export const ImageUploader: React.FC<{
   form: UseFormReturn<any>;
   fieldName: Path<FieldValues>;
   onImageUploaded?: (imageObject: {url: string} ) => void;
-}> = ({ form, fieldName, onImageUploaded }) => {
+  imageLabel?: string;
+  description?: string;
+  allowedTypes?: string[];
+  project: string;
+}> = ({ form, fieldName, onImageUploaded, allowedTypes, imageLabel = 'Afbeelding', description = '', project }) => {
   const [file, setFile] = React.useState<{url: string}>();
   const [fileUrl, setFileUrl] = React.useState<string>('');
 
@@ -28,17 +32,12 @@ export const ImageUploader: React.FC<{
 
   async function uploadImage(data: any) {
     let image = prepareFile(data);
-    await fetch('/api/openstad/api/image', {
-      method: 'GET',
+    const response = await fetch(`/api/openstad/api/project/${project}/upload/image`, {
+      method: 'POST',
+      body: image
     })
-      .then((response) => response.json())
-      .then(async (data) => {
-        const response = await fetch(data, {
-          method: 'POST',
-          body: image,
-        })
-        setFile(await response.json());
-      });
+
+    setFile(await response.json());
   }
 
   useEffect(() => {
@@ -49,16 +48,26 @@ export const ImageUploader: React.FC<{
     }
   }, [file, form, fieldName, onImageUploaded]);
 
+  const acceptAttribute = allowedTypes
+    ? allowedTypes.join(',')
+    : "";
+
   return (
     <FormField
       control={form.control}
       name={fieldName}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Afbeelding</FormLabel>
+          <FormLabel>{imageLabel}</FormLabel>
+            { description && (
+              <FormDescription>
+                {description}
+              </FormDescription>
+            )}
           <FormControl>
             <Input
               type="file"
+              accept={acceptAttribute}
               {...field}
               onChange={(e) => uploadImage(e.target.files?.[0])}
             />

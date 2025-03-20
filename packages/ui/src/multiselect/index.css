@@ -55,3 +55,17 @@
     display: grid;
     grid-gap: 0.5rem;
 }
+
+.osc .multi-select{
+    position: relative;
+}
+
+.osc .multi-select .multiselect-container{
+    background: #fff;
+    position: absolute;
+    z-index: 999;
+    width: 100%;
+    max-height: 250px;
+    overflow: auto;
+    box-shadow: 0 0 6px hsl(0deg 0% 0% / 16.08%);
+}

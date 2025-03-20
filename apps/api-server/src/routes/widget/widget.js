@@ -214,10 +214,10 @@ function getDefaultConfig(project, widgetType) {
       url: logoutUrl,
     },
     projectId: project.id,
-    imageUrl: protocol + url,
+    imageUrl: config.url + `/api/project/${project.id}/upload`,
   };
 
-  if (widgetType == 'resourcedetailmap' || widgetType ==  'resourcesmap' || widgetType ==  'editormap') {
+  if (widgetType == 'resourcedetailmap' || widgetType ==  'resourcesmap' || widgetType ==  'editormap' || widgetType ==  'resourceform') {
     result.area = project.area?.polygon
   }
 
@@ -234,6 +234,12 @@ function setConfigsToOutput(
   widgetConfig,
   widgetId
 ) {
+  
+  // Move general settings to the root to ensure we have the correct config
+  if (widgetConfig.hasOwnProperty('general')) {
+    widgetConfig = {...widgetConfig, ...widgetConfig.general};
+  }
+  
   let config = merge.recursive(
     {},
     widgetSettings.Config,
@@ -244,8 +250,6 @@ function setConfigsToOutput(
   );
 
   config = JSON.stringify(config)
-    .replaceAll('\\', '\\\\')
-    .replaceAll('`', '\\`');
 
   return getWidgetJavascriptOutput(
     widgetSettings,
@@ -263,24 +267,79 @@ function getWidgetJavascriptOutput(
 ) {
   // If we include remix icon in the components, we are sending a lot of data to the client
   // By using a CDN and loading it through a <link> tag, we reduce the size of the response and leverage browser cache
-  const remixIconCss =
-    process.env.REMIX_ICON_CDN ||
-    'https://unpkg.com/remixicon@3.5.0/fonts/remixicon.css';
 
   let output = '';
   let widgetOutput = '';
   let css = '';
 
   const data = JSON.parse(widgetConfig)
-  const extraCss = data.project?.cssUrl ? `<link href="${data.project.cssUrl}" rel="stylesheet">` : '';
-  
-  widgetSettings.js.forEach((file) => {
-    widgetOutput += fs.readFileSync(require.resolve(`${widgetSettings.packageName}/${file}`), 'utf8');
-  });
 
-  widgetSettings.css.forEach((file) => {
-    css += fs.readFileSync(require.resolve(`${widgetSettings.packageName}/${file}`), 'utf8');
-  });
+  const extraCssFile = data.project?.cssUrl ? `<link href="${data.project.cssUrl}" rel="stylesheet">` : '';
+  const apiUrl = process.env.URL ?? '';
+
+
+
+
+
+
+  // TODO: Fix this, it's a hack to get the ChoiceGuide to work
+  if ( widgetSettings.componentName === 'ChoiceGuide' ) {
+
+    widgetSettings.js.forEach((file) => {
+      const filePath = path.resolve(__dirname, '../../../../../packages/choiceguide', file);
+      if (!fs.existsSync(filePath)) {
+        console.error(`JS file not found: ${filePath}`);
+      } else {
+        widgetOutput += fs.readFileSync(filePath, 'utf8');
+      }
+    });
+
+    widgetSettings.css.forEach((file) => {
+      const filePath = path.resolve(__dirname, '../../../../../packages/choiceguide', file);
+      if (!fs.existsSync(filePath)) {
+        console.error(`CSS file not found: ${filePath}`);
+      } else {
+        css += fs.readFileSync(filePath, 'utf8');
+      }
+    });
+
+  } else if ( widgetSettings.componentName === 'DistributionModule' ) {
+
+    widgetSettings.js.forEach((file) => {
+      const filePath = path.resolve(__dirname, '../../../../../packages/distribution-module', file);
+      if (!fs.existsSync(filePath)) {
+        console.error(`JS file not found: ${filePath}`);
+      } else {
+        widgetOutput += fs.readFileSync(filePath, 'utf8');
+      }
+    });
+
+    widgetSettings.css.forEach((file) => {
+      const filePath = path.resolve(__dirname, '../../../../../packages/distribution-module', file);
+      if (!fs.existsSync(filePath)) {
+        console.error(`CSS file not found: ${filePath}`);
+      } else {
+        css += fs.readFileSync(filePath, 'utf8');
+      }
+    });
+
+  } else {
+    widgetSettings.js.forEach((file) => {
+      console.log(`${widgetSettings.packageName}/${file}`);
+      console.log(require.resolve(`${widgetSettings.packageName}/${file}`));
+      widgetOutput += fs.readFileSync(require.resolve(`${widgetSettings.packageName}/${file}`), 'utf8');
+    });
+
+    widgetSettings.css.forEach((file) => {
+      css += fs.readFileSync(require.resolve(`${widgetSettings.packageName}/${file}`), 'utf8');
+    });
+  }
+
+  // End of to do
+
+
+
+
 
   // Rewrite the url to the images that we serve statically
   css = css.replaceAll(
@@ -288,6 +347,8 @@ function getWidgetJavascriptOutput(
     `url(${config.url}/widget/${widgetType}-images/`
   );
 
+  const widgetConfigWithCorrectEscapes = widgetConfig.replaceAll('\\', '\\\\').replaceAll('`', '\\`');
+  
   // Create function to render component
   // The process.env.NODE_ENV is set to production, otherwise some React dependencies will not work correctly
   // @todo: find a way around this so we don't have to provide the `process` variable
@@ -300,15 +361,22 @@ function getWidgetJavascriptOutput(
         const renderedWidgets = {};
         
         const currentScript = document.currentScript;
-          currentScript.insertAdjacentHTML('afterend', \`<div id="\${randomComponentId}" style="width: 100%; height: 100%;"></div>\`);
+          currentScript.insertAdjacentHTML('afterend', \`<div class="openstad" id="\${randomComponentId}"></div>\`);
 
           const redirectUri = encodeURI(window.location.href);
-          const config = JSON.parse(\`${widgetConfig}\`.replaceAll("[[REDIRECT_URI]]", redirectUri));
+          
+          const config = JSON.parse(\`${widgetConfigWithCorrectEscapes}\`.replaceAll("[[REDIRECT_URI]]", redirectUri));
+          let customCss = '';
+          
+          if (config.project.cssCustom) {
+            const customCssUrl = '${apiUrl}/api/project/' + config.projectId + '/css/' + randomComponentId;
+            customCss = \`<link href ="\${customCssUrl}" rel ="stylesheet">\`;
+          }
           
           document.querySelector('head').innerHTML += \`
-            <style>${css}</style>
-            <link href="${remixIconCss}" rel="stylesheet">
-            ${extraCss}
+            <link href="${apiUrl}/api/project/\${config.projectId}/widget-css/${widgetType}" rel="stylesheet">
+            ${extraCssFile}
+            \${customCss}
           \`;
           
           function renderWidget () {

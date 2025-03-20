@@ -9,30 +9,36 @@ import { ListHeading, Paragraph } from '@/components/ui/typography';
 import { RemoveResourceDialog } from '@/components/dialog-resource-remove';
 import { toast } from 'react-hot-toast';
 import { sortTable, searchTable } from '@/components/ui/sortTable';
+import * as XLSX from 'xlsx';
+import flattenObject from "@/lib/export-helpers/flattenObject";
 
 export default function ProjectResources() {
   const router = useRouter();
   const { project } = router.query;
   const { data, error, isLoading, remove } = useResources(project as string);
 
-  const exportData = (data: BlobPart, fileName: string, type: string) => {
-    // Create a link and download the file
-    const blob = new Blob([data], { type });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const exportData = (data: any[], fileName: string) => {
+
+    const flattenedData = data.map(item => flattenObject(item));
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(flattenedData);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+    XLSX.writeFile(workbook, fileName);
   };
 
   function transform() {
-    const jsonData = JSON.stringify(data);
-    exportData(jsonData, `resources.json`, "application/json");
+    const today = new Date();
+    const projectId = router.query.project;
+    const formattedDate = today.toISOString().split('T')[0].replace(/-/g, '');
+
+    exportData(data, `${projectId}_resources_${formattedDate}.xlsx`);
   }
 
   const [filterData, setFilterData] = useState(data);
-  const debouncedSearchTable = searchTable(setFilterData);
+  const [filterSearchType, setFilterSearchType] = useState<string>('');
+  const debouncedSearchTable = searchTable(setFilterData, filterSearchType);
 
   useEffect(() => {
     setFilterData(data);
@@ -43,14 +49,14 @@ export default function ProjectResources() {
   return (
     <div>
       <PageLayout
-        pageHeader="Resources"
+        pageHeader="Inzendingen"
         breadcrumbs={[
           {
             name: 'Projecten',
             url: '/projects',
           },
           {
-            name: 'Resources',
+            name: 'Inzendingen',
             url: `/projects/${project}/resources`,
           },
         ]}
@@ -60,22 +66,38 @@ export default function ProjectResources() {
               href={`/projects/${project}/resources/create`}>
               <Button variant="default" className='text-xs p-2 w-fit'>
                 <Plus size="20" className="hidden lg:flex" />
-                Resource toevoegen
+                Inzending toevoegen
               </Button>
             </Link>
             <Button className="text-xs p-2 w-fit" type="submit" onClick={transform}>
-              Exporteer resources
+              Exporteer inzendingen
             </Button>
           </div>
         }>
         <div className="container py-6">
 
-        <input
-            type="text"
-            className='mb-4 p-2 rounded float-right'
-            placeholder="Zoeken..."
-            onChange={(e) => debouncedSearchTable(e.target.value, filterData, data)}
-          />
+          <div className="float-right mb-4 flex gap-4">
+            <p className="text-xs font-medium text-muted-foreground self-center">Filter op:</p>
+            <select
+              className="p-2 rounded"
+              onChange={(e) => setFilterSearchType(e.target.value)}
+            >
+              <option value="">Alles</option>
+              <option value="id">Stem ID</option>
+              <option value="title">Inzendingen</option>
+              <option value="yes">Gestemd op ja</option>
+              <option value="no">Gestemd op nee</option>
+              <option value="createdAt">Datum aangemaakt</option>
+
+
+            </select>
+            <input
+              type="text"
+              className='p-2 rounded'
+              placeholder="Zoeken..."
+              onChange={(e) => debouncedSearchTable(e.target.value, filterData, data)}
+            />
+          </div>
 
           <div className="p-6 bg-white rounded-md clear-right">
             <div className="grid grid-cols-2 lg:grid-cols-7 items-center py-2 px-2 border-b border-border">
@@ -86,7 +108,7 @@ export default function ProjectResources() {
               </ListHeading>
               <ListHeading className="hidden lg:flex">
                 <button className="filter-button" onClick={(e) => setFilterData(sortTable('resource', e, filterData))}>
-                  Resources
+                  Inzendingen
                 </button>
               </ListHeading>
               <ListHeading className="hidden lg:flex lg:col-span-1">
@@ -132,15 +154,15 @@ export default function ProjectResources() {
                       className="hidden lg:flex ml-auto"
                       onClick={(e) => e.preventDefault()}>
                       <RemoveResourceDialog
-                        header="Resource verwijderen"
-                        message="Weet je zeker dat je deze resource wilt verwijderen?"
+                        header="Inzending verwijderen"
+                        message="Weet je zeker dat je deze inzending wilt verwijderen?"
                         onDeleteAccepted={() =>
                           remove(resource.id)
                             .then(() =>
-                              toast.success('Resource successvol verwijderd')
+                              toast.success('Inzending successvol verwijderd')
                             )
                             .catch((e) =>
-                              toast.error('Resource kon niet worden verwijderd')
+                              toast.error('Inzending kon niet worden verwijderd')
                             )
                         }
                       />

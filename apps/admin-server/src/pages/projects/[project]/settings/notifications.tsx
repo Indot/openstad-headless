@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
-  FormControl,
+  FormControl, FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -25,6 +25,7 @@ import InfoDialog from '@/components/ui/info-hover';
 const formSchema = z.object({
   fromAddress: z.string().email(),
   projectmanagerAddress: z.string().email(),
+  fromName: z.string().optional(),
 });
 
 export default function ProjectSettingsNotifications() {
@@ -36,6 +37,7 @@ export default function ProjectSettingsNotifications() {
   const defaults = useCallback(
     () => ({
       fromAddress: data?.emailConfig?.[category]?.fromAddress || null,
+      fromName: data?.emailConfig?.[category]?.fromName || '',
       projectmanagerAddress:
         data?.emailConfig?.[category]?.projectmanagerAddress || null,
     }),
@@ -57,6 +59,7 @@ export default function ProjectSettingsNotifications() {
         [category]: {
           fromAddress: values.fromAddress,
           projectmanagerAddress: values.projectmanagerAddress,
+          fromName: values.fromName,
         },
       });
       if (project) {
@@ -83,13 +86,13 @@ export default function ProjectSettingsNotifications() {
             url: `/projects/${project}/settings`,
           },
           {
-            name: 'Administrator notificaties',
+            name: 'E-mail instellingen',
             url: `'/projects/${project}/settings/notifications'`,
           },
         ]}>
         <div className="container py-6">
           <Form {...form} className="p-6 bg-white rounded-md">
-            <Heading size="xl">Administrator notificaties</Heading>
+            <Heading size="xl">E-mail instellingen</Heading>
             <Separator className="my-4" />
             <form
               onSubmit={form.handleSubmit(onSubmit)}
@@ -100,9 +103,26 @@ export default function ProjectSettingsNotifications() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Emailadres verstuurder
-                      <InfoDialog content={'Dit email adres wordt gebruikt voor: ...'} />
+                      Vanaf welk mailadres worden de notificaties verstuurd?
+                      <InfoDialog content={'Let op: dit werkt alleen als de domeininstellingen voor dit e-mailadres correct geconfigureerd zijn. Tip: maak hiervoor gebruik van Flowmailer of Sendgrid.'} />
                     </FormLabel>
+                    <FormControl>
+                      <Input placeholder="" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="fromName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Wil je een naam toevoegen aan het e-mailadres waarvandaan de notificaties worden verstuurd?
+                      <InfoDialog content={'Let op: dit werkt alleen als de domeininstellingen voor dit e-mailadres correct geconfigureerd zijn. Tip: maak hiervoor gebruik van Flowmailer of Sendgrid.'} />
+                    </FormLabel>
+                    <FormDescription>Als je hier een naam invult komt dit voor het e-mailadres van de afzender te staan, bijvoorbeeld: OpenStad site &#60;info@openstad.nl&#62;</FormDescription>
                     <FormControl>
                       <Input placeholder="" {...field} />
                     </FormControl>
@@ -116,8 +136,8 @@ export default function ProjectSettingsNotifications() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Emailadres project manager
-                      <InfoDialog content={'Dit email adres wordt gebruikt voor: ...'} />
+                      Naar welk e-mailadres moeten de reacties op de notificaties gestuurd worden?
+                      <InfoDialog content={'Dit is het e-mailadres waarop reacties op automatische e-mails van OpenStad binnenkomen. Denk aan: inlogmails en bevestigingsmails na indienen resource. Dit e-mailadres wordt ook getoond op de loginpagina van OpenStad.'} />
                       </FormLabel>
                     <FormControl>
                       <Input placeholder="" {...field} />

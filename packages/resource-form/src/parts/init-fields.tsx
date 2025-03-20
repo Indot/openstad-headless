@@ -29,14 +29,14 @@ export const InitializeFormFields = (items, data) => {
                         .filter((tag: any) => tag.type === item.tags)
                         .map((tag: any, index: number) => ({
                             trigger: `${index}`,
-                            titles: [{text: tag.name, key: tag.name}],
+                            titles: [{text: tag.name, key: tag.id}],
                             images: []
                         }))
                     : [];
             }
 
             const fieldData: any = {
-                type: item.fieldType,
+                type: item.fieldType || item.type,
                 title: item.title,
                 description: item.description,
                 fieldKey: item.fieldKey,
@@ -45,13 +45,16 @@ export const InitializeFormFields = (items, data) => {
                 maxCharacters: getMinMaxByField(`${item.fieldKey}MaxLength`, data) || item.maxCharacters || '',
                 variant: item.variant,
                 multiple: item.multiple,
-                options: item.options
+                options: item.options,
+                rows: 5,
+                placeholder: item.placeholder
             };
 
-            switch (item.fieldType) {
-                case 'text':
-                    fieldData['rows'] = 4;
-                    break;
+            if ( item.defaultValue ) {
+                fieldData['defaultValue'] = item.defaultValue;
+            }
+
+            switch (item.type) {
                 case 'checkbox':
                 case 'select':
                 case 'radiobox':
@@ -59,14 +62,42 @@ export const InitializeFormFields = (items, data) => {
                         item.options &&
                         item.options.length > 0
                     ) {
+                        const defaultValue: string[] = [];
+
                         fieldData['choices'] = item.options.map((option) => {
-                            return option.titles[0].key
+                            if (option.titles[0].defaultValue) {
+                                defaultValue.push(option.titles[0].key);
+                            }
+                            return {
+                                value: option.titles[0].key,
+                                label: option.titles[0].key,
+                                isOtherOption: option.titles[0].isOtherOption,
+                                defaultValue: option.titles[0].defaultValue
+                            }
+                        });
+
+                        if (defaultValue.length > 0) {
+                            fieldData['defaultValue'] = defaultValue;
+                        }
+                    }
+                    break;
+                case 'imageUpload':
+                    fieldData['allowedTypes'] = item.allowedTypes || ["image/*"];
+                    break;
+                case 'tags':
+                    if (
+                        item.options &&
+                        item.options.length > 0
+                    ) {
+                        fieldData['choices'] = item.options.map((option) => {
+                            return { value: (option.titles[0].key).toString(), label: option.titles[0].text }
                         });
                     }
                     break;
-                case 'upload':
-                    fieldData['allowedTypes'] = item.allowedTypes;
+                case 'budget':
+                    fieldData['format'] = true;
                     break;
+                
             }
 
             formFields.push(fieldData);

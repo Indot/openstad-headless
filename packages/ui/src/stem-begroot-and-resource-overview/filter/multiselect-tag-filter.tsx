@@ -1,6 +1,8 @@
 import { MultiSelect } from '@openstad-headless/ui/src';
 import React from 'react';
 import DataStore from '@openstad-headless/data-store/src';
+import { FormLabel } from "@utrecht/component-library-react";
+
 
 //Todo correctly type resources. Will be possible when the datastore is correctly typed
 
@@ -10,7 +12,7 @@ type Props = {
   tagType: string;
   placeholder?: string;
   selected?: number[];
-  onUpdateFilter?: (filter: string) => void;
+  onUpdateFilter?: (filter: any, label?: string) => void;
   onlyIncludeIds?: number[];
 };
 
@@ -34,18 +36,32 @@ const MultiSelectTagFilter = ({
     onlyIncludeIds,
   });
 
+  const randomId = Math.random().toString(36).substring(7);
+
+  function getRandomId(placeholder: string | undefined) {
+    if(placeholder && placeholder.length >= 1) {
+    return placeholder.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
+    } else {
+    return randomId;
+    }
+  }
+
   return (
-    <MultiSelect
-      label={props.placeholder || ''}
-      onItemSelected={(value) => {
-        onUpdateFilter && onUpdateFilter(value);
-      }}
-      options={(tags || []).map((tag: TagDefinition) => ({
-        value: tag.id,
-        label: tag.name,
-        checked: selected.includes(tag.id),
-      }))}
-    />
+    <div className="form-element">
+      <FormLabel htmlFor={getRandomId(props.placeholder)}>{props.placeholder || 'Selecteer item'}</FormLabel>
+      <MultiSelect
+        id={getRandomId(props.placeholder)}
+        label={props.placeholder || ''}
+        onItemSelected={(value, label) => {
+          onUpdateFilter && onUpdateFilter(value, label);
+        }}
+        options={(tags || []).map((tag: TagDefinition) => ({
+          value: tag.id,
+          label: tag.name,
+          checked: selected.includes(tag.id),
+        }))}
+      />
+    </div>
   );
 };
 export { MultiSelectTagFilter };

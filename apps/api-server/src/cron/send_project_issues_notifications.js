@@ -8,7 +8,7 @@ const projectsWithIssues = require('../services/projects-with-issues');
 // Purpose
 // -------
 // Send emails to projectmanagers just before the enddate of their project is reached
-// 
+//
 // Runs every day
 module.exports = {
   // cronTime: '*/10 * * * * *',
@@ -18,7 +18,9 @@ module.exports = {
   onTick: UseLock.createLockedExecutable({
     name: 'send-project-issues-notifications',
     task: async (next) => {
-
+      
+      if (process.env.DISABLE_PROJECT_ISSUE_WARNINGS && process.env.DISABLE_PROJECT_ISSUE_WARNINGS === "true") return;
+      
       try {
 
         let notificationsToBeSent = {};
@@ -31,12 +33,12 @@ module.exports = {
         for (let i=0; i < shouldHaveEndedButAreNot.length; i++) {
           let project = shouldHaveEndedButAreNot[i];
           if (!notificationsToBeSent[ project.id ]) notificationsToBeSent[ project.id ] = { project, messages: [] };
-          notificationsToBeSent[ project.id ].messages.push(`Project ${ project.title } ${ project.url ? ' (' + project.url + ')' : '' }has an endDate in the past but projectHasEnded is not set.`);
+          notificationsToBeSent[ project.id ].messages.push(`Project ${ project.title } ${ project.url ? ' (' + project.url + ')' : '' } has an endDate in the past but projectHasEnded is not set.`);
         }
 
         // projects that have ended but are not anonymized
         result = await projectsWithIssues.endedButNotAnonymized({})
-        let endedButNotAnonymized = result.rows;
+        let endedButNotAnonymized = result; // result.rows;
 
         // for each project
         for (let i=0; i < endedButNotAnonymized.length; i++) {
@@ -44,13 +46,13 @@ module.exports = {
           if (!notificationsToBeSent[ project.id ]) notificationsToBeSent[ project.id ] = { project, messages: [] };
           notificationsToBeSent[ project.id ].messages.push(`Project ${ project.title } (${ project.domain }) has ended but is not yet anonymized.`);
         }
-        
+
         // send notifications
         let projectIds = Object.keys(notificationsToBeSent);
         for (let projectId of projectIds) {
           let target = notificationsToBeSent[projectId];
           await db.Notification.create({
-            type: "new or updated comment - admin update",
+            type: "project issues warning",
 			      projectId,
             data: {
               messages: target.messages.map( message => ({ content: message }) ),

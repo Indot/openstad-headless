@@ -10,7 +10,23 @@ spec:
   storageClassName: {{ .Values.persistence.storageClassName }}
 {{- end }}
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.image.volumes.data.size }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: docs-data-claim
+  namespace: {{ .Release.Namespace }}
+  annotations: {{ .Values.persistence.annotations }}
+spec:
+{{- if (and .Values.persistence .Values.persistence.storageClassName) }}
+  storageClassName: {{ .Values.persistence.storageClassName }}
+{{- end }}
+  accessModes:
+    - ReadWriteMany
   resources:
     requests:
       storage: {{ .Values.image.volumes.data.size }}
@@ -26,7 +42,7 @@ spec:
   storageClassName: {{ .Values.persistence.storageClassName }}
 {{- end }}
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: {{ .Values.cms.volumes.data.size }}

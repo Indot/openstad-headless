@@ -20,6 +20,7 @@ import {
 } from '@/lib/server-side-props-definition';
 import WidgetPublish from '@/components/widget-publish';
 import { BaseProps, ProjectSettingProps } from '@openstad-headless/types';
+import ArgumentsSorting from "@/pages/projects/[project]/widgets/comments/[id]/sorting";
 export const getServerSideProps = withApiUrl;
 
 // Use these props in the widget tabs
@@ -42,7 +43,7 @@ export default function WidgetArguments({ apiUrl }: WithApiUrlProps) {
   return (
     <div>
       <PageLayout
-        pageHeader="Project naam"
+        pageHeader="Projectnaam"
         breadcrumbs={[
           {
             name: 'Projecten',
@@ -53,7 +54,7 @@ export default function WidgetArguments({ apiUrl }: WithApiUrlProps) {
             url: `/projects/${projectId}/widgets`,
           },
           {
-            name: 'Argumenten',
+            name: 'Reacties',
             url: `/projects/${projectId}/widgets/comments/${id}`,
           },
         ]}>
@@ -63,6 +64,7 @@ export default function WidgetArguments({ apiUrl }: WithApiUrlProps) {
               <TabsTrigger value="general">Algemeen</TabsTrigger>
               <TabsTrigger value="list">Titel</TabsTrigger>
               <TabsTrigger value="form">Formulier</TabsTrigger>
+              <TabsTrigger value="sorting">Sorteren</TabsTrigger>
               <TabsTrigger value="publish">Publiceren</TabsTrigger>
             </TabsList>
             <TabsContent value="general" className="p-0">
@@ -105,6 +107,24 @@ export default function WidgetArguments({ apiUrl }: WithApiUrlProps) {
             <TabsContent value="form" className="p-0">
               {previewConfig ? (
                 <ArgumentsForm
+                  {...previewConfig}
+                  updateConfig={(config) =>
+                    updateConfig({ ...widget.config, ...config })
+                  }
+                  onFieldChanged={(key, value) => {
+                    if (previewConfig) {
+                      updatePreview({
+                        ...previewConfig,
+                        [key]: value,
+                      });
+                    }
+                  }}
+                />
+              ) : null}
+            </TabsContent>
+            <TabsContent value="sorting" className="p-0">
+              {previewConfig ? (
+                <ArgumentsSorting
                   {...previewConfig}
                   updateConfig={(config) =>
                     updateConfig({ ...widget.config, ...config })

@@ -21,6 +21,7 @@ module.exports = {
         req.data.global.projectName = 'Openstad';
         req.project = self.apos.options.project;
         req.data.global.projectTitle = req.project.title;
+        req.data.prefix = self.apos.options.prefix || '';
 
         // system defaults
         let cmsDefaults = process.env.CMS_DEFAULTS;
@@ -52,15 +53,28 @@ module.exports = {
 
   fields: {
     add: {
+
       siteTitle: {
         type: 'string',
         label: 'Site titel',
+      },
+
+      hideSiteTitle: {
+        type: 'boolean',
+        label: 'Verberg site titel',
+        def: true,
       },
 
       siteLogo: {
         type: 'attachment',
         label: 'Site logo',
         fileGroup: 'images',
+      },
+
+      logoAltText: {
+        type: 'string',
+        label: 'Logo alt text',
+        default: 'Afbeelding van het logo, link naar de homepage',
       },
 
       ctaButtons: {
@@ -96,12 +110,82 @@ module.exports = {
         },
       },
 
-      cssExtras: {
-        type: 'string',
-        textarea: true,
-        def: '#logo-image {\n  max-height: 50px;\n}',
-        label: 'Extra CSS',
+      topMenuButtons: {
+        label: 'Topmenu buttons',
+        type: 'array',
+        draggable: true,
+        fields: {
+          add: {
+            label: {
+              label: 'Label',
+              type: 'string',
+            },
+            href: {
+              label: 'Url',
+              type: 'string',
+            },
+          },
+        },
       },
+
+      showLoginButton: {
+        type: 'boolean',
+        def: 'false',
+        label: 'Toon login knop',
+      },
+
+      loginButtonLabel: {
+        label: 'Login knop tekst',
+        def: 'Login',
+        type: 'string',
+        if: {
+          showLoginButton: true,
+        },
+      },
+
+      showAccountButton: {
+        type: 'boolean',
+        def: 'false',
+        label: 'Toon \'mijn account\' knop',
+      },
+
+      accountButtonHref: {
+        label: 'Link naar \'mijn account\' pagina',
+        def: '/account',
+        type: 'string',
+        if: {
+          showAccountButton: true,
+        },
+      },
+
+      accountButtonLabel: {
+        label: '\'Mijn account\' knop tekst',
+        def: 'Mijn account',
+        type: 'string',
+        help: '[[name]] wordt vervangen door de naam van de gebruiker',
+        if: {
+          showAccountButton: true,
+        },
+      },
+
+      logoutButtonLabel: {
+        label: 'Loguit knop tekst',
+        def: 'Logout',
+        help: '[[name]] wordt vervangen door de naam van de gebruiker',
+        type: 'string',
+      },
+
+      favicon: {
+        type: 'attachment',
+        label: 'Favicon',
+        fileGroup: 'icons',
+      },
+      // cssExtras: {
+      //   type: 'string',
+      //   textarea: true,
+      //   def: '#logo-image {\n  max-height: 50px;\n}',
+      //   label: 'Extra CSS',
+      // },
       customCssLink: {
         type: 'string',
         label: 'URL voor CSS imports (optioneel)',
@@ -228,28 +312,45 @@ module.exports = {
           },
         },
       },
+      errorText: {
+        type: 'area',
+        label: 'Creeër een pagina die getoond wordt bij een 404 error',
+        options: {
+          widgets: {
+            'openstad-section': {},
+          }
+        }
+      },
     },
 
     group: {
       basics: {
         label: 'Algemene instellingen',
-        fields: ['siteTitle', 'siteLogo', 'ctaButtons'],
+        fields: ['siteTitle', 'hideSiteTitle',  'siteLogo', 'logoAltText'],
       },
       css: {
         label: 'Vormgeving',
-        fields: ['cssExtras', 'customCssLink', 'compactMenu'],
+        fields: ['customCssLink', 'favicon', 'compactMenu'],
+      },
+      login: {
+        label: 'Menu instellingen',
+        fields: ['showLoginButton', 'loginButtonLabel', 'showAccountButton', 'accountButtonHref', 'accountButtonLabel', 'logoutButtonLabel', 'ctaButtons', 'topMenuButtons'],
       },
       cookies: {
         label: 'Cookie instellingen',
         fields: ['useCookieWarning', 'cookiePageLink'],
       },
       analitics: {
-        label: 'Analitics',
+        label: 'Analytics',
         fields: ['analyticsType', 'analyticsIdentifier', 'analyticsCodeBlock'],
       },
       footer: {
         label: 'Footer',
         fields: ['footerlinks'],
+      },
+      errorPage: {
+        label: '404 pagina',
+        fields: ['errorText'],
       },
     },
   },

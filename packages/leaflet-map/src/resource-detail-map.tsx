@@ -16,10 +16,11 @@ const ResourceDetailMap = ({
   marker = undefined,
   markerIcon = undefined,
   center = undefined,
+  resourceIdRelativePath = 'openstadResourceId',
   ...props
 }: PropsWithChildren<ResourceDetailMapWidgetProps>) => {
 
-  props.zoom ||= 15;
+  props.zoom ||= 7;
 
   const datastore = new DataStore({
     projectId: props.projectId,
@@ -27,17 +28,20 @@ const ResourceDetailMap = ({
     config: { api: props.api },
   });
 
-  const urlParams = new URLSearchParams(window.location.search);
-  resourceId =
-    resourceId || ( urlParams.get('openstadResourceId')
-      ? urlParams.get('openstadResourceId') as string
-      : undefined );
 
-  const {
-    data: resource,
-    error,
-    isLoading,
-  } = datastore.useResource({
+  const urlParams = new URLSearchParams(window.location.search);
+
+  resourceId = resourceId || urlParams.get(resourceIdRelativePath);
+
+  if (!resourceId && resourceIdRelativePath.includes('[id]')) {
+    const paramNameMatch = resourceIdRelativePath.match(/[?&]([^=]+)=\[id]/);
+    if (paramNameMatch && paramNameMatch[1]) {
+      const paramName = paramNameMatch[1];
+      resourceId = urlParams.get(paramName);
+    }
+  }
+
+  const { data: resource } = datastore.useResource({
     projectId: props.projectId,
     resourceId: resourceId,
   });
@@ -59,14 +63,21 @@ const ResourceDetailMap = ({
   const { data: areas } = datastore.useArea({
     projectId: props.projectId
   });
+  
 
-  let areaId = props?.project?.areaId || false;
+  let areaId = props?.map?.areaId || false;
   const polygon = areaId && Array.isArray(areas) && areas.length > 0 ? (areas.find(area => (area.id).toString() === areaId) || {}).polygon : [];
+
+  const zoom = {
+    minZoom: props?.map?.minZoom ? parseInt(props.map.minZoom) : 7,
+    maxZoom: props?.map?.maxZoom ? parseInt(props.map.maxZoom) : 20
+  };
 
   return (
     <>
       <BaseMap
         {...props}
+        {...zoom}
         area={polygon}
         autoZoomAndCenter="area"
         center={currentCenter}

@@ -1,4 +1,16 @@
 var sanitize = require('sanitize-html');
+const _ = require('lodash');
+
+// Normalize unicode text by Compatibility Decomposition
+// this will remove the unicode characters that are not in the ASCII range
+// We also use the deburr method from lodash to remove diacritics
+const normalizeUnicodeText = (text) => {
+	if (!text || typeof text !== 'string') {
+		return '';
+	}
+	
+	return _.deburr(text.normalize('NFKD'));
+};
 
 // Decorator for the sanitize function
 // This prevents the bug where sanitize returns the string 'null' when null is passed
@@ -6,7 +18,7 @@ const sanitizeIfNotNull = (text, tags) => {
 	if (text === null) {
 		return null;
 	}
-	
+	text = normalizeUnicodeText(text);
 	return sanitize(text, tags);
 }
 

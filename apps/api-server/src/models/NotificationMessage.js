@@ -3,6 +3,15 @@ const nunjucks = require('nunjucks');
 const mjml2html = require('mjml');
 const sendMessage = require('../notifications/send-engines');
 
+let nunjucksEnv;
+
+(async () => {
+  const { applyFilters } = await import('../../../../packages/raw-resource/includes/nunjucks-filters-js.cjs');
+
+  nunjucksEnv = new nunjucks.Environment();
+  applyFilters(nunjucksEnv);
+})();
+
 module.exports = ( db, sequelize, DataTypes ) => {
   const NotificationMessage = sequelize.define('notification_message', {
 
@@ -56,14 +65,10 @@ module.exports = ( db, sequelize, DataTypes ) => {
   }, {
 
     hooks: {
-
       beforeValidate: async function (instance, options) {
-        if (options.data) { // create subject and body
-
+        if (options.data) {
           let template, templateData;
           try {
-            
-            // template
             template = await db.NotificationTemplate.findOne({
               where: {
                 projectId: instance.projectId,
@@ -80,44 +85,48 @@ module.exports = ( db, sequelize, DataTypes ) => {
             }
             if (!template) throw new Error('Notification template not found');
 
-            // fetch data
-            templateData = {};
+            templateData = options.data;
             templateData.project = await db.Project.scope('includeConfig', 'includeEmailConfig').findByPk(instance.projectId);
             let keys = ['resource', 'user', 'comment', 'submission'];
             for (let key of keys) {
               let idkey = key + 'Id';
               let model = key.charAt(0).toUpperCase() + key.slice(1);
+
               if (options.data[idkey]) {
-                if (Array.isArray(options.data[idkey]) && options.data[idkey].length == 1) options.data[idkey] = options.data[idkey][0];
+                // Handle array of ids
+                if (Array.isArray(options.data[idkey]) && options.data[idkey].length == 1) {
+                  options.data[idkey] = options.data[idkey][0];
+                }
+
+                // If there are multiple IDs
                 if (Array.isArray(options.data[idkey])) {
-                  templateData[`${key}s`] = await db[model].findAll({where: { id: options.data[idkey] }});
+                  templateData[`${key}s`] = await db[model].findAll({ where: { id: options.data[idkey] } });
                 } else {
-                  templateData[key] = await db[model].findByPk( options.data[idkey] );
+                  // Special handling for 'Resource'
+                  if (model === 'Resource') {
+                    templateData[key] = await db.Resource.findByPk(options.data[idkey], {
+                      include: [{ model: db.Tag, attributes: ['name', 'type'] }]
+                    });
+                  } else {
+                    // Default behavior for other models
+                    templateData[key] = await db[model].findByPk(options.data[idkey]);
+                  }
                 }
               }
             }
-
-          } catch(err) {
+          } catch (err) {
             throw err;
           }
 
           try {
-
-            // parse template
-            instance.subject = nunjucks.renderString(template.subject, {...templateData});
-
-            let body = nunjucks.renderString(template.body, {...templateData});
+            instance.subject = nunjucksEnv.renderString(template.subject, { ...templateData });
+            let body = nunjucksEnv.renderString(template.body, { ...templateData });
             body = mjml2html(body);
             instance.body = body.html;
-
-          } catch(err) {
-            // do not crash on a render error
-            console.log(err);
+          } catch (err) {
           }
-          
         }
       }
-
     }
 
   });
@@ -134,13 +143,12 @@ module.exports = ( db, sequelize, DataTypes ) => {
     deleteableBy: 'admin',
   };
 
-  NotificationMessage.prototype.send = async function() {
+  NotificationMessage.prototype.send = async function () {
     try {
-      let engine = this.engine;
-      await sendMessage[engine]({ message: this });
+      await sendMessage[this.engine]({ message: this });
       await this.update({ status: 'sent' });
-    } catch(err) {
-      console.log('Send failed');
+    } catch (err) {
+      console.error('Send failed:', err);
       throw err;
     }
   }

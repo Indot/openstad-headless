@@ -1,4 +1,5 @@
 const config = require('config');
+const prefillAllowedDomains = require('../services/prefillAllowedDomains');
 const URL    = require('url').URL;
 
 module.exports = function( req, res, next ) {
@@ -7,14 +8,23 @@ module.exports = function( req, res, next ) {
 
 	let domain = ''
 	try {
-		domain = new URL(url).hostname;
+		domain = new URL(url).host;
 	} catch(err) {	}
 
 	let allowedDomains = (req.project && req.project.config && req.project.config.allowedDomains) || config.allowedDomains;
-	if ( !allowedDomains || allowedDomains.indexOf(domain) === -1) {
-		url = config.url || req.protocol + '://' + req.hostname;
-	}
+	allowedDomains = prefillAllowedDomains(allowedDomains || []);
 
+	if ( !allowedDomains || allowedDomains.indexOf(domain) === -1) {
+		url = config.url || req.protocol + '://' + req.host;
+		
+		// Exception for URLs without project - we allow all origins
+		// see project middleware for list of exceptions
+		if (req.headers && req.headers.origin && (req.path.match('^(/api/repo|/api/template|/api/area|/api/widget|/api/image|/api/document|/api/widget-type|/widget|/$)') || req.path.match('^(/api/lock(/[^/]*)?)$') || (req.path.match('^(/api/user)') && req.method == 'GET'))) {
+				url = req.headers.origin;
+				console.log ('no project, allowing origin', url);
+			}
+	}
+	
 	if (config.dev && config.dev['Header-Access-Control-Allow-Origin'] && process.env.NODE_ENV == 'development') {
     res.header('Access-Control-Allow-Origin', config.dev['Header-Access-Control-Allow-Origin'] );
   } else {

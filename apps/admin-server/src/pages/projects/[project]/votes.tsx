@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import useUsers from "@/hooks/use-users";
 import { sortTable, searchTable } from '@/components/ui/sortTable';
+import * as XLSX from 'xlsx';
 
 export default function ProjectResources() {
   const router = useRouter();
@@ -15,22 +16,21 @@ export default function ProjectResources() {
   const { data, remove } = useVotes(project as string);
 
   const [filterData, setFilterData] = useState(data);
-  const debouncedSearchTable = searchTable(setFilterData);
+  const [filterSearchType, setFilterSearchType] = useState<string>('');
+  const debouncedSearchTable = searchTable(setFilterData, filterSearchType);
 
-  const exportData = (data: BlobPart, fileName: string, type: string) => {
-    // Create a link and download the file
-    const blob = new Blob([data], { type });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const exportData = (data: any[], fileName: string) => {
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+    XLSX.writeFile(workbook, fileName);
   };
-
   function transform() {
-    const jsonData = JSON.stringify(data);
-    exportData(jsonData, `votes.json`, "application/json");
+    const today = new Date();
+    const projectId = router.query.project;
+    const formattedDate = today.toISOString().split('T')[0].replace(/-/g, '');
+    exportData(data, `${projectId}_stemmen_${formattedDate}.xlsx`);
   }
 
   const { data: usersData } = useUsers();
@@ -62,12 +62,27 @@ export default function ProjectResources() {
         }>
         <div className="container py-6">
 
-          <input
+          <div className="float-right mb-4 flex gap-4">
+            <p className="text-xs font-medium text-muted-foreground self-center">Filter op:</p>
+            <select
+              className="p-2 rounded"
+              onChange={(e) => setFilterSearchType(e.target.value)}
+            >
+              <option value="">Alles</option>
+              <option value="id">Stem ID</option>
+              <option value="createdAt">Stemdatum</option>
+              <option value="resourceId">Plan ID</option>
+              <option value="userId">Gebruiker ID</option>
+              <option value="ip">Gebruiker IP</option>
+              <option value="opinion">Voorkeur</option>
+            </select>
+            <input
               type="text"
-              className='mb-4 p-2 rounded float-right'
+              className='p-2 rounded'
               placeholder="Zoeken..."
               onChange={(e) => debouncedSearchTable(e.target.value, filterData, data)}
             />
+          </div>
 
           <div className="p-6 bg-white rounded-md clear-right">
             <div className="grid grid-cols-1 lg:grid-cols-8 items-center py-2 px-2 border-b border-border">
@@ -105,13 +120,8 @@ export default function ProjectResources() {
             <ul>
               {filterData?.map((vote: any) => {
                 const userId = vote.userId;
-                const currentUser = !!usersData && Array.isArray(usersData) ? usersData?.filter((user) => {
-                  if (user.id === userId) {
-                    return user;
-                  }
-                }) : [];
-                const user = currentUser.length > 0 ? currentUser[0] : '';
-                const currentUserKey = !!user && user.idpUser?.identifier && user.idpUser?.provider ? `${user.idpUser.provider}-*-${user.idpUser.identifier}` : ( user.id?.toString() || 'unknown' );
+                const user = usersData?.find((user: any) => user.id === userId) || null;
+                const currentUserKey = !!user && user.idpUser?.identifier && user.idpUser?.provider ? `${user.idpUser.provider}-*-${user.idpUser.identifier}` : (user?.id?.toString() || 'unknown');
 
                 return (
                   <li
@@ -124,10 +134,10 @@ export default function ProjectResources() {
                       {vote.createdAt}
                     </Paragraph>
                     <Paragraph className="hidden lg:flex truncate lg:col-span-1">
-                      <a href={`/projects/${project}/resources/${vote.resourceId}`} style={{textDecoration: 'underline'}}>{vote.resourceId}</a>
+                      <a href={`/projects/${project}/resources/${vote.resourceId}`} style={{ textDecoration: 'underline' }}>{vote.resourceId}</a>
                     </Paragraph>
                     <Paragraph className="hidden lg:flex truncate lg:col-span-1">
-                      <a href={`/users/${btoa(currentUserKey)}`} style={{textDecoration: 'underline'}}>{vote.userId}</a>
+                      <a href={`/users/${btoa(currentUserKey)}`} style={{ textDecoration: 'underline' }}>{vote.userId}</a>
                     </Paragraph>
                     <Paragraph className="hidden lg:flex truncate lg:col-span-1">
                       {vote.ip}

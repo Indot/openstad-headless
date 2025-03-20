@@ -7,11 +7,11 @@ const Sequelize = require('sequelize');
 const db = require('../../db');
 const service = require('./service');
 const hasRole = require('../../lib/sequelize-authorization/lib/hasRole');
-
+const isRedirectAllowed = require('../../services/isRedirectAllowed');
+const prefillAllowedDomains = require('../../services/prefillAllowedDomains');
 let router = express.Router({mergeParams: true});
 
 // Todo: dit is 'openstad', dus veel configuratie mag hier hardcoded en uit de config gehaald
-
 // ----------------------------------------------------------------------------------------------------
 // connect a user from the openstad auth server to the api
 
@@ -82,26 +82,35 @@ router
 
 router
   .route('(/project/:projectId)?/login')
-  .get(function (req, res, next) {
-
+  .get(async function (req, res, next) {
     // logout first?
     if (!req.query.forceNewLogin) return next();
-    let baseUrl = config.url
-    let backToHereUrl = baseUrl + '/auth/project/' + req.project.id + '/login?useAuth=' + req.authConfig.provider + '&redirectUri=' + encodeURIComponent(req.query.redirectUri)
-    backToHereUrl = encodeURIComponent(backToHereUrl)
-    let url = baseUrl + '/auth/project/' + req.project.id + '/logout?redirectUri=' + backToHereUrl;
-    return res.redirect(url)
 
+    const projectId = req.params.projectId;
+    if(req.query.redirectUri && projectId && await isRedirectAllowed(projectId, req.query.redirectUri)){
+      let baseUrl = config.url
+      let backToHereUrl = baseUrl + '/auth/project/' + req.project.id + '/login?useAuth=' + req.authConfig.provider + '&redirectUri=' + encodeURIComponent(req.query.redirectUri)
+      backToHereUrl = encodeURIComponent(backToHereUrl)
+      let url = baseUrl + '/auth/project/' + req.project.id + '/logout?redirectUri=' + backToHereUrl;
+      return res.redirect(url)
+    }else if(req.query.redirectUri){
+      return next(createError(403, 'redirectUri not found in allowlist.'));
+    }
+    return next();
   })
-  .get(function (req, res, next) {
-
+  .get(async function (req, res, next) {
     // redirect to idp server
-    let redirectUri = encodeURIComponent(config.url + '/auth/project/' + req.project.id + '/digest-login?useAuth=' + req.authConfig.provider + '\&returnTo=' + req.query.redirectUri);
-    let url = `${req.authConfig.serverUrl}/login`;
-    if (req.query.loginPriviliged) url += '/admin';
-    url += `?redirect_uri=${redirectUri}&response_type=code&client_id=${req.authConfig.clientId}&scope=offline&forceLogin=1`;
-    res.redirect(url);
-
+    const projectId = req.params.projectId;
+    if(req.query.redirectUri && projectId && await isRedirectAllowed(projectId, req.query.redirectUri)){
+      let redirectUri = encodeURIComponent(config.url + '/auth/project/' + req.project.id + '/digest-login?useAuth=' + req.authConfig.provider + '\&returnTo=' + req.query.redirectUri);
+      let url = `${req.authConfig.serverUrl}/dialog/authorize`;
+      if (req.query.loginPriviliged) url = `${req.authConfig.serverUrl}/auth/admin/login`;
+      url = `${url}?redirect_uri=${redirectUri}&response_type=code&client_id=${req.authConfig.clientId}&scope=offline`;
+      return res.redirect(url);
+    }else if(req.query.redirectUri){
+      return next(createError(403, 'redirectUri not found in allowlist.'));
+    }
+    return next();
   })
 
 // ----------------------------------------------------------------------------------------------------
@@ -119,10 +128,11 @@ router
     redirectUrl = redirectUrl || '/';
 
     const isAllowedRedirectDomain = (url, project) => {
-      let allowedDomains = project?.config?.allowedDomains || [];
+      let allowedDomains = prefillAllowedDomains(project?.config?.allowedDomains || []);
+
       if (project.url) {
         try {
-          let projectDomain = new URL(project.url).hostname;
+          let projectDomain = new URL(project.url).host;
           allowedDomains.push(projectDomain);
         } catch(err) {}
       }
@@ -132,7 +142,7 @@ router
       }
       let redirectUrlHost = '';
       try {
-        redirectUrlHost = new URL(url).hostname;
+        redirectUrlHost = new URL(url).host;
       } catch(err) {}
       // throw error if allowedDomains is empty or the redirectURI's host is not present in the allowed domains
       return allowedDomains && allowedDomains.indexOf(redirectUrlHost) !== -1;
@@ -298,13 +308,15 @@ router
     }
     return next();
   })
-  .get(function (req, res, next) {
-
-    // todo: isallowed
-    if (req.query.redirectUri) return res.redirect(req.query.redirectUri);
+  .get(async function (req, res, next) {
+    const projectId = req.params.projectId;
+    if(req.query.redirectUri && projectId && await isRedirectAllowed(projectId, req.query.redirectUri)){
+      return res.redirect(req.query.redirectUri);
+    }else if(req.query.redirectUri){
+      return next(createError(403, 'redirectUri not found in allowlist.'));
+    }
 
     return res.json({ logout: 'success' })
-
   });
 
 

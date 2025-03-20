@@ -34,22 +34,58 @@ $body-color: #111;
   max-width: 100%;
 }
 
-body{
-  max-width: 87.5rem;
+body {
+  max-width: 100%;
   margin: 0 auto;
   background-color: var(--nlds-body-background-color, var(--nlds-default-background-color, #F0F4F8));
 }
 
-.utrecht-heading-1.utrecht-accordion__header{
-  --utrecht-heading-1-line-height: 0;
+.utrecht-heading-1.utrecht-accordion__header {
+  --utrecht-heading-1-line-height: unset;
 }
 
 // HACK: Dialog bug fix
-body[data-apos-level]{
+body[data-apos-level] {
   padding: 0 !important;
   margin: 0 auto !important;
 }
 
-[data-apos-refreshable], .bp-wrapper, main{
+[data-apos-refreshable],
+.bp-wrapper,
+main {
   background: #fff;
+}
+
+.skip-link {
+  position: absolute;
+  z-index: -1;
+  top: 10px;
+  left: 10px;
+
+  &:focus-visible {
+    z-index: 99999999;
+  }
+}
+
+// page logo
+#logo-image {
+  max-height: 50px;
+}
+
+*:focus-visible {
+  outline: var(--utrecht-focus-outline-width) var(--utrecht-focus-outline-style) var(--utrecht-focus-outline-color);
+}
+
+.iconButton--container {
+  width: 100%;
+  display: flex;
+  justify-content: end;
+  align-items: center;
+}
+
+@media screen and (max-width: 540px) {
+  #main {
+    max-width: 95%;
+    margin: 0 auto;
+  }
 }

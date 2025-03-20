@@ -60,7 +60,9 @@ export default function CreateProject() {
     const project = await createProject(values.projectName);
     if (project) {
       toast.success('Project aangemaakt!');
-      router.push(`/projects/${project.id}/settings`);
+      const projectId = project?.id || project;
+
+      router.push(`/projects/${projectId}/settings`);
     } else {
       toast.error('Er is helaas iets mis gegaan.')
     }
@@ -108,7 +110,7 @@ export default function CreateProject() {
                 name="projectName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Project naam</FormLabel>
+                    <FormLabel>Projectnaam</FormLabel>
                     <FormControl>
                       <Input placeholder="Naam" {...field} />
                     </FormControl>
@@ -134,7 +136,7 @@ export default function CreateProject() {
                 name="importedProjectName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Project naam</FormLabel>
+                    <FormLabel>Projectnaam</FormLabel>
                     <FormControl>
                       <Input placeholder="Naam" {...field} />
                     </FormControl>

@@ -1,5 +1,5 @@
 import './stem-begroot-budget-list.css';
-import React from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 import { BudgetStatusPanel } from '../../reuseables/budget-status-panel';
 import { IconButton, Image, Spacer } from '@openstad-headless/ui/src';
 import "@utrecht/component-library-css";
@@ -13,8 +13,19 @@ export const StemBegrootBudgetList = ({
   maxBudget,
   typeIsBudgeting,
   maxNrOfResources,
+  showInfoMenu,
   decideCanAddMore,
   onSelectedResourceRemove,
+  step1Title,
+  resourceCardTitle,
+  panelTitle,
+  budgetChosenTitle,
+  budgetRemainingTitle,
+  tagsToDisplay,
+  activeTagTab = '',
+  typeIsPerTag = false,
+  setActiveTagTab,
+  step1MaxText = '',
 }: {
   allResourceInList: Array<any>
   selectedResources: Array<any>;
@@ -22,8 +33,19 @@ export const StemBegrootBudgetList = ({
   typeIsBudgeting: boolean;
   maxNrOfResources: number;
   introText?: string;
+  showInfoMenu?: boolean;
   decideCanAddMore: () => boolean;
-  onSelectedResourceRemove: (resource: { id: number }) => void;
+  onSelectedResourceRemove: (resource: { id: number, budget: number }) => void;
+  step1Title: string;
+  resourceCardTitle: string;
+  panelTitle?: string;
+  budgetChosenTitle?: string;
+  budgetRemainingTitle?: string;
+  tagsToDisplay?: Array<string>;
+  activeTagTab?: string;
+  typeIsPerTag?: boolean;
+  setActiveTagTab?: Dispatch<SetStateAction<string>>;
+  step1MaxText?: string;
 }) => {
   const budgetUsed = selectedResources.reduce(
     (total, cv) => total + cv.budget,
@@ -34,58 +56,80 @@ export const StemBegrootBudgetList = ({
 
   return (
     <>
-      <section className="stem-begroot-budget-list">
-        <div className="stem-begroot-budget-list-used-budgets">
-          <div className="stem-begroot-helptext-and-budget-section-helptext">
-            <Paragraph>{introText}</Paragraph>
-          </div>
-        </div>
-
-        <BudgetStatusPanel
-          typeIsBudgeting={typeIsBudgeting}
-          maxNrOfResources={maxNrOfResources}
-          nrOfResourcesSelected={selectedResources.length}
-          maxBudget={maxBudget}
-          budgetUsed={budgetUsed}
-        />
-      </section>
+      {(showInfoMenu || !!introText) && (
+        <section className="stem-begroot-budget-list">
+          {!!introText && (
+            <div className="stem-begroot-budget-list-used-budgets">
+              <div className="stem-begroot-helptext-and-budget-section-helptext">
+                <Paragraph>{introText}</Paragraph>
+              </div>
+            </div>
+          )}
+          {showInfoMenu && (
+            <BudgetStatusPanel
+              typeIsBudgeting={typeIsBudgeting}
+              maxNrOfResources={maxNrOfResources}
+              nrOfResourcesSelected={selectedResources.length}
+              maxBudget={maxBudget}
+              budgetUsed={budgetUsed}
+              showInfoMenu={showInfoMenu}
+              title={panelTitle}
+              budgetChosenTitle={budgetChosenTitle}
+              budgetRemainingTitle={budgetRemainingTitle}
+            />
+          )}
+        </section>
+      )}
       <section className="budget-list-container">
-        <Heading5>Uw selecties</Heading5>
+        <Heading5>{step1Title}</Heading5>
         {!canAddMore && allResourceInList.length > 0 ? (
           <Paragraph className="budget-list-status-text helptext error">
             {typeIsBudgeting
-              ? 'Onvoldoende budget'
-              : 'Maximaal aantal plannen bereikt'}
+              ? step1MaxText || 'Onvoldoende budget'
+              : step1MaxText || 'Maximaal aantal plannen bereikt'}
           </Paragraph>
         ) : null}
 
         <Spacer size={1} />
         <div className="budget-list-selections">
-          <div className="budget-list-selection-indicaction-container">
-            {selectedResources.map((resource) => (
-              <Image
-                imageHeader={
-                  <div
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      justifyContent: 'end',
-                      alignItems: 'center',
-                    }}>
-                    <IconButton
-                      onClick={() => {
-                        onSelectedResourceRemove(resource);
-                      }}
-                      className="subtle-button"
-                      icon="ri-close-line"
-                    />
-                  </div>
-                }
-                key={`resource-detail-image-${resource.id}`}
-                className="budget-list-selection-indicaction"
-                src={resource.images?.at(0)?.url || ''}
-              />
-            ))}
+          <div className="budget-list-selection-indicaction-container" role="status">
+            {selectedResources.map((resource) => {
+              let defaultImage = '';
+
+              interface Tag {
+                name: string;
+                defaultResourceImage?: string;
+              }
+              if (Array.isArray(resource?.tags)) {
+                const sortedTags = resource.tags.sort((a: Tag, b: Tag) => a.name.localeCompare(b.name));
+                const tagWithImage = sortedTags.find((tag: Tag) => tag.defaultResourceImage);
+                defaultImage = tagWithImage?.defaultResourceImage || '';
+              }
+
+              const resourceImages = (Array.isArray(resource.images) && resource.images.length > 0) ? resource.images?.at(0)?.url : defaultImage;
+              const hasImages = !!resourceImages ? '' : 'resource-has-no-images';
+
+              return (
+                <Image
+                  imageHeader={
+                    <div className='iconButton--container'>
+                      <IconButton
+                        onClick={() => {
+                          onSelectedResourceRemove(resource);
+                        }}
+                        className="primary-action-button"
+                        icon="ri-close-line"
+                        iconOnly={true}
+                        text='Item verwijderen'
+                      />
+                    </div>
+                  }
+                  key={`resource-detail-image-${resource.id}`}
+                  className={`budget-list-selection-indicaction ${hasImages}`}
+                  src={resourceImages}
+                />
+              )
+            })}
 
             {allResourceInList.length === 0 || canAddMore ? (
               <Button
@@ -101,12 +145,32 @@ export const StemBegrootBudgetList = ({
                     });
                   }
                 }}>
-                  Selecteer een plan
+                  {resourceCardTitle || 'Selecteer een plan'}
               </Button>
             ) : null}
           </div>
         </div>
-        <div></div>
+
+        { (typeIsPerTag && !!tagsToDisplay) && (
+          <div className="themes-container">
+            {tagsToDisplay?.map((tag: string) => (
+              <div className={`theme ${tag === activeTagTab ? 'active' : ''}`} key={tag}>
+                <Button
+                  appearance="primary-action-button"
+                  disabled={tag === activeTagTab}
+                  onClick={() => {
+                    if (!!setActiveTagTab) {
+                      setActiveTagTab(tag);
+                    }
+                  }}
+                >
+                  {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
       </section>
     </>
   );

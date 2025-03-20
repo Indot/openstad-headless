@@ -2,7 +2,7 @@ import { ImageUploader } from '@/components/image-uploader';
 import { Button } from '@/components/ui/button';
 import {
   Form,
-  FormControl,
+  FormControl, FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -28,6 +28,9 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import InfoDialog from '@/components/ui/info-hover';
+import { useRouter } from 'next/router';
+import {YesNoSelect} from "@/lib/form-widget-helpers";
+import {ProjectSettingProps} from "@openstad-headless/types";
 
 const formSchema = z.object({
   trigger: z.string(),
@@ -39,20 +42,41 @@ const formSchema = z.object({
   minCharacters: z.string().optional(),
   maxCharacters: z.string().optional(),
   variant: z.string().optional(),
-  images: z
-    .array(z.object({ image: z.any().optional(), src: z.string() }))
-    .optional(),
   options: z
     .array(
       z.object({
         trigger: z.string(),
-        titles: z.array(z.object({ text: z.string(), key: z.string() })),
-        images: z
-          .array(z.object({ image: z.any().optional(), src: z.string() }))
-          .optional(),
+        titles: z.array(z.object({
+          text: z.string().optional(),
+          key: z.string(),
+          image: z.string().optional(),
+          isOtherOption: z.boolean().optional(),
+          defaultValue: z.boolean().optional(),
+          hideLabel: z.boolean().optional()
+        })),
       })
     )
     .optional(),
+  multiple: z.boolean().optional(),
+  image: z.string().optional(),
+  imageAlt: z.string().optional(),
+  imageDescription: z.string().optional(),
+  imageUpload: z.string().optional(),
+  fieldRequired: z.boolean().optional(),
+  showSmileys: z.boolean().optional(),
+  placeholder: z.string().optional(),
+  defaultValue: z.string().optional(),
+  imageOptionUpload: z.string().optional(),
+
+  // Keeping these for backwards compatibility
+  image1Upload: z.string().optional(),
+  image1: z.string().optional(),
+  text1: z.string().optional(),
+  key1: z.string().optional(),
+  image2: z.string().optional(),
+  image2Upload: z.string().optional(),
+  text2: z.string().optional(),
+  key2: z.string().optional(),
 });
 
 export default function WidgetEnqueteItems(
@@ -65,6 +89,10 @@ export default function WidgetEnqueteItems(
   const [selectedOption, setOption] = useState<Option | null>(null);
   const [settingOptions, setSettingOptions] = useState<boolean>(false);
   const [file, setFile] = useState<File>();
+  const [isFieldKeyUnique, setIsFieldKeyUnique] = useState(true);
+
+  const router = useRouter();
+  const { project } = router.query;
 
   // adds item to items array if no item is selected, otherwise updates the selected item
   async function onSubmit(values: FormData) {
@@ -79,11 +107,10 @@ export default function WidgetEnqueteItems(
       setItems((currentItems) => [
         ...currentItems,
         {
-          trigger: `${
-            currentItems.length > 0
-              ? parseInt(currentItems[currentItems.length - 1].trigger) + 1
-              : 1
-          }`,
+          trigger: `${currentItems.length > 0
+            ? parseInt(currentItems[currentItems.length - 1].trigger) + 1
+            : 1
+            }`,
           title: values.title,
           key: values.key,
           description: values.description,
@@ -93,9 +120,26 @@ export default function WidgetEnqueteItems(
           maxCharacters: values.maxCharacters,
           variant: values.variant || 'text input',
           options: values.options || [],
+          multiple: values.multiple || false,
+          image: values.image || '',
+          imageAlt: values.imageAlt || '',
+          imageDescription: values.imageDescription || '',
+          fieldRequired: values.fieldRequired || false,
+          showSmileys: values.showSmileys || false,
+          defaultValue: values.defaultValue || '',
+          placeholder: values.placeholder || '',
+
+          // Keeping these for backwards compatibility
+          image1: values.image1 || '',
+          text1: values.text1 || '',
+          key1: values.key1 || '',
+          image2: values.image2 || '',
+          text2: values.text2 || '',
+          key2: values.key2 || '',
         },
       ]);
     }
+
     form.reset(defaults);
     setOptions([]);
   }
@@ -107,27 +151,22 @@ export default function WidgetEnqueteItems(
         currentOptions.map((option) =>
           option.trigger === selectedOption.trigger
             ? {
-                ...option,
-                titles:
-                  values.options?.find((o) => o.trigger === option.trigger)
-                    ?.titles || [],
-                images:
-                  values.options?.find((o) => o.trigger === option.trigger)
-                    ?.images || [],
-              }
+              ...option,
+              titles:
+                values.options?.find((o) => o.trigger === option.trigger)
+                  ?.titles || [],
+            }
             : option
         )
       );
       setOption(null);
     } else {
       const newOption = {
-        trigger: `${
-          options.length > 0
-            ? parseInt(options[options.length - 1].trigger) + 1
-            : 0
-        }`,
+        trigger: `${options.length > 0
+          ? parseInt(options[options.length - 1].trigger) + 1
+          : 0
+          }`,
         titles: values.options?.[values.options.length - 1].titles || [],
-        images: values.options?.[values.options.length - 1].images || [],
       };
       setOptions((currentOptions) => [...currentOptions, newOption]);
     }
@@ -146,6 +185,22 @@ export default function WidgetEnqueteItems(
     maxCharacters: '',
     variant: 'text input',
     options: [],
+    multiple: false,
+    image: '',
+    imageAlt: '',
+    imageDescription: '',
+    fieldRequired: false,
+    showSmileys: false,
+    defaultValue: '',
+    placeholder: '',
+
+    // Keeping these for backwards compatibility
+    image1: '',
+    text1: '',
+    key1: '',
+    image2: '',
+    text2: '',
+    key2: '',
   });
 
   const form = useForm<FormData>({
@@ -161,7 +216,7 @@ export default function WidgetEnqueteItems(
 
   const { onFieldChanged } = props;
   useEffect(() => {
-      onFieldChanged('items', items);
+    onFieldChanged('items', items);
   }, [items]);
 
   // Sets form to selected item values when item is selected
@@ -177,6 +232,22 @@ export default function WidgetEnqueteItems(
         maxCharacters: selectedItem.maxCharacters || '',
         variant: selectedItem.variant || '',
         options: selectedItem.options || [],
+        multiple: selectedItem.multiple || false,
+        image: selectedItem.image || '',
+        imageAlt: selectedItem.imageAlt || '',
+        imageDescription: selectedItem.imageDescription || '',
+        fieldRequired: selectedItem.fieldRequired || false,
+        showSmileys: selectedItem.showSmileys || false,
+        defaultValue: selectedItem.defaultValue || '',
+        placeholder: selectedItem.placeholder || '',
+
+        // Keeping these for backwards compatibility
+        image1: selectedItem.image1 || '',
+        text1: selectedItem.text1 || '',
+        key1: selectedItem.key1 || '',
+        image2: selectedItem.image2 || '',
+        text2: selectedItem.text2 || '',
+        key2: selectedItem.key2 || '',
       });
       setOptions(selectedItem.options || []);
     }
@@ -250,16 +321,24 @@ export default function WidgetEnqueteItems(
   }
 
   function handleSaveItems() {
-    props.updateConfig({ ...props, items });
+    const updatedProps = { ...props };
+
+    Object.keys(updatedProps).forEach((key: string) => {
+      if (key.startsWith("options.")) {
+        // @ts-ignore
+        delete updatedProps[key];
+      }
+    });
+
+    props.updateConfig({ ...updatedProps, items });
   }
+
 
   const hasOptions = () => {
     switch (form.watch('questionType')) {
-      case 'images':
-        return true;
       case 'multiplechoice':
-        return true;
       case 'multiple':
+      case 'images':
         return true;
       default:
         return false;
@@ -269,8 +348,8 @@ export default function WidgetEnqueteItems(
   const hasList = () => {
     switch (form.watch('questionType')) {
       case 'multiplechoice':
-        return true;
       case 'multiple':
+      case 'images':
         return true;
       default:
         return false;
@@ -288,9 +367,20 @@ export default function WidgetEnqueteItems(
     setSettingOptions(false);
   }
 
+  useEffect(() => {
+    const key = form.watch("fieldKey");
+
+    if (key) {
+      const isUnique = items.every((item) =>
+        (selectedItem && item.trigger === selectedItem.trigger) || item.fieldKey !== key
+      );
+
+      setIsFieldKeyUnique(isUnique);
+    }
+  }, [form.watch("fieldKey"), selectedItem]);
+
   return (
     <div>
-      {/* <ImageUploader /> */}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -303,45 +393,44 @@ export default function WidgetEnqueteItems(
                 <div className="flex flex-col gap-1">
                   {items.length > 0
                     ? items
-                        .sort(
-                          (a, b) => parseInt(a.trigger) - parseInt(b.trigger)
-                        )
-                        .map((item, index) => (
-                          <div
-                            key={index}
-                            className={`flex cursor-pointer justify-between border border-secondary ${
-                              item.trigger == selectedItem?.trigger &&
-                              'bg-secondary'
+                      .sort(
+                        (a, b) => parseInt(a.trigger) - parseInt(b.trigger)
+                      )
+                      .map((item, index) => (
+                        <div
+                          key={index}
+                          className={`flex cursor-pointer justify-between border border-secondary ${item.trigger == selectedItem?.trigger &&
+                            'bg-secondary'
                             }`}>
-                            <span className="flex gap-2 py-3 px-2">
-                              <ArrowUp
-                                className="cursor-pointer"
-                                onClick={() =>
-                                  handleAction('moveUp', item.trigger, true)
-                                }
-                              />
-                              <ArrowDown
-                                className="cursor-pointer"
-                                onClick={() =>
-                                  handleAction('moveDown', item.trigger, true)
-                                }
-                              />
-                            </span>
-                            <span
-                              className="gap-2 py-3 px-2 w-full"
-                              onClick={() => setItem(item)}>
-                              {`${item.title || 'Geen titel'}`}
-                            </span>
-                            <span className="gap-2 py-3 px-2">
-                              <X
-                                className="cursor-pointer"
-                                onClick={() =>
-                                  handleAction('delete', item.trigger, true)
-                                }
-                              />
-                            </span>
-                          </div>
-                        ))
+                          <span className="flex gap-2 py-3 px-2">
+                            <ArrowUp
+                              className="cursor-pointer"
+                              onClick={() =>
+                                handleAction('moveUp', item.trigger, true)
+                              }
+                            />
+                            <ArrowDown
+                              className="cursor-pointer"
+                              onClick={() =>
+                                handleAction('moveDown', item.trigger, true)
+                              }
+                            />
+                          </span>
+                          <span
+                            className="gap-2 py-3 px-2 w-full"
+                            onClick={() => setItem(item)}>
+                            {`${item.title || 'Geen titel'}`}
+                          </span>
+                          <span className="gap-2 py-3 px-2">
+                            <X
+                              className="cursor-pointer"
+                              onClick={() =>
+                                handleAction('delete', item.trigger, true)
+                              }
+                            />
+                          </span>
+                        </div>
+                      ))
                     : 'Geen items'}
                 </div>
               </div>
@@ -361,126 +450,148 @@ export default function WidgetEnqueteItems(
                   <div className="flex flex-col gap-y-2">
                     <Heading size="xl">Antwoordopties</Heading>
                     <Separator className="mt-2" />
-                    {form.watch('questionType') === 'images' && (
-                      <>
-                        <FormField
-                          control={form.control}
-                          name={`options.${options.length - 1}.images.0.image`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Afbeelding 1</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="file"
-                                  {...field}
-                                  onChange={(e) => setFile(e.target.files?.[0])}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`options.${options.length - 1}.titles.0.key`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Key afbeelding 1</FormLabel>
-                              <Input {...field} />
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`options.${options.length - 1}.titles.0.text`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Titel afbeelding 1</FormLabel>
-                              <Input {...field} />
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`options.${options.length - 1}.images.1.image`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Afbeelding 2</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="file"
-                                  {...field}
-                                  onChange={(e) => setFile(e.target.files?.[0])} // Dit moet nog aangepast worden naar een array van files
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`options.${options.length - 1}.titles.1.key`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Key afbeelding 2</FormLabel>
-                              <Input {...field} />
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`options.${options.length - 1}.titles.1.text`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Titel afbeelding 2</FormLabel>
-                              <Input {...field} />
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </>
-                    )}
                     {hasList() && (
-                      <>
-                        <FormField
-                          control={form.control}
-                          name={`options.${options.length - 1}.titles.0.key`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Optie key</FormLabel>
-                              <Input {...field} />
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`options.${options.length - 1}.titles.0.text`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Optie tekst</FormLabel>
-                              <Input {...field} />
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </>
-                    )}
+                      (() => {
+                        const currentOption = options.findIndex((option) => option.trigger === selectedOption?.trigger);
+                        const activeOption = currentOption !== -1 ? currentOption : options.length;
 
-                    {/* <FormField
-                          control={form.control}
-                          name={`options.${options.length - 1}.key`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Key</FormLabel>
-                              <Input {...field} />
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        /> */}
+                        return form.watch("questionType") !== "images" ? (
+                          <>
+                            <FormField
+                              control={form.control}
+                              name={`options.${activeOption}.titles.0.key`}
+                              render={({field}) => (
+                                <FormItem>
+                                  <FormLabel>Optie tekst</FormLabel>
+                                  <Input {...field} />
+                                  <FormMessage/>
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              // @ts-ignore
+                              name={`options.${activeOption}.titles.0.isOtherOption`}
+                              render={({field}) => (
+                                <>
+                                  <FormItem
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'flex-start',
+                                      flexDirection: 'row',
+                                      marginTop: '10px'
+                                    }}>
+                                    {YesNoSelect(field, props)}
+                                    <FormLabel
+                                      style={{marginTop: 0, marginLeft: '6px'}}>Is &apos;Anders, namelijk...&apos;</FormLabel>
+                                    <FormMessage/>
+                                  </FormItem>
+                                  <FormDescription>
+                                    Als je deze optie selecteert, wordt er automatisch een tekstveld toegevoegd aan het
+                                    formulier.
+                                    Het tekstveld wordt zichtbaar wanneer deze optie wordt geselecteerd.
+                                  </FormDescription>
+                                </>
+                              )}
+                            />
+
+                            { form.watch('questionType') === 'multiple' && (
+                              <FormField
+                                control={form.control}
+                                // @ts-ignore
+                                name={`options.${activeOption}.titles.0.defaultValue`}
+                                render={({field}) => (
+                                  <>
+                                    <FormItem
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'flex-start',
+                                        flexDirection: 'row',
+                                        marginTop: '10px'
+                                      }}>
+                                      {YesNoSelect(field, props)}
+                                      <FormLabel
+                                        style={{marginTop: 0, marginLeft: '6px'}}>Standaard aangevinkt?</FormLabel>
+                                      <FormMessage/>
+                                    </FormItem>
+                                    <FormDescription>
+                                      Als je deze optie selecteert, wordt deze optie standaard aangevinkt.
+                                    </FormDescription>
+                                  </>
+                                )}
+                              />
+                            )}
+                          </>
+                          ) : (
+                            <>
+                              <ImageUploader
+                                form={form}
+                                project={project as string}
+                                fieldName="imageOptionUpload"
+                                imageLabel="Afbeelding"
+                                allowedTypes={["image/*"]}
+                                onImageUploaded={(imageResult) => {
+                                  const image = imageResult ? imageResult.url : '';
+
+                                  form.setValue(`options.${activeOption}.titles.0.image`, image);
+                                  form.resetField('imageOptionUpload');
+                                }}
+                              />
+
+                              {!!form.getValues(`options.${activeOption}.titles.0.image`) && (
+                                <div style={{ position: 'relative' }}>
+                                  <img src={form.getValues(`options.${activeOption}.titles.0.image`)} />
+                                </div>
+                              )}
+
+                              <FormField
+                                control={form.control}
+                                name={`options.${activeOption}.titles.0.key`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Titel</FormLabel>
+                                    <FormDescription>
+                                      Dit veld wordt gebruikt voor de alt tekst van de afbeelding. Dit is nodig voor toegankelijkheid.
+                                      De titel wordt ook gebruikt als bijschrift onder de afbeelding, behalve als je de optie selecteert om de titel te verbergen.
+                                    </FormDescription>
+                                    <Input {...field} />
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                // @ts-ignore
+                                name={`options.${activeOption}.titles.0.hideLabel`}
+                                render={({field}) => (
+                                  <>
+                                    <FormItem
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'flex-start',
+                                        flexDirection: 'row',
+                                        marginTop: '10px'
+                                      }}>
+                                      {YesNoSelect(field, props)}
+                                      <FormLabel
+                                        style={{marginTop: 0, marginLeft: '6px'}}>Titel verbergen?</FormLabel>
+                                      <FormMessage/>
+                                    </FormItem>
+                                    <FormDescription>
+                                      Als je deze optie selecteert, wordt de titel van de afbeelding verborgen.
+                                    </FormDescription>
+                                  </>
+                                )}
+                              />
+                            </>
+                          );
+                        })()
+                      )}
 
                     <Button
                       className="w-full bg-secondary text-black hover:text-white mt-4"
@@ -517,58 +628,57 @@ export default function WidgetEnqueteItems(
                     <div className="flex flex-col gap-1">
                       {options.length > 0
                         ? options
-                            .sort(
-                              (a, b) =>
-                                parseInt(a.trigger) - parseInt(b.trigger)
-                            )
-                            .map((option, index) => (
-                              <div
-                                key={index}
-                                className={`flex cursor-pointer justify-between border border-secondary ${
-                                  option.trigger == selectedOption?.trigger &&
-                                  'bg-secondary'
+                          .sort(
+                            (a, b) =>
+                              parseInt(a.trigger) - parseInt(b.trigger)
+                          )
+                          .map((option, index) => (
+                            <div
+                              key={index}
+                              className={`flex cursor-pointer justify-between border border-secondary ${option.trigger == selectedOption?.trigger &&
+                                'bg-secondary'
                                 }`}>
-                                <span className="flex gap-2 py-3 px-2">
-                                  <ArrowUp
-                                    className="cursor-pointer"
-                                    onClick={() =>
-                                      handleAction(
-                                        'moveUp',
-                                        option.trigger,
-                                        false
-                                      )
-                                    }
-                                  />
-                                  <ArrowDown
-                                    className="cursor-pointer"
-                                    onClick={() =>
-                                      handleAction(
-                                        'moveDown',
-                                        option.trigger,
-                                        false
-                                      )
-                                    }
-                                  />
-                                </span>
-                                <span
-                                  className="py-3 px-2 w-full"
-                                  onClick={() => setOption(option)}>
-                                  {option?.titles?.[0].text}
-                                </span>
-                                <span className="py-3 px-2">
-                                  <X
-                                    className="cursor-pointer"
-                                    onClick={() =>
-                                      handleAction(
-                                        'delete',
-                                        option.trigger,
-                                        false
-                                      )
-                                    }
-                                  />
-                                </span>
-                              </div>
-                            ))
+                              <span className="flex gap-2 py-3 px-2">
+                                <ArrowUp
+                                  className="cursor-pointer"
+                                  onClick={() =>
+                                    handleAction(
+                                      'moveUp',
+                                      option.trigger,
+                                      false
+                                    )
+                                  }
+                                />
+                                <ArrowDown
+                                  className="cursor-pointer"
+                                  onClick={() =>
+                                    handleAction(
+                                      'moveDown',
+                                      option.trigger,
+                                      false
+                                    )
+                                  }
+                                />
+                              </span>
+                              <span
+                                className="py-3 px-2 w-full"
+                                onClick={() => setOption(option)}>
+                                {option?.titles?.[0].key}
+                              </span>
+                              <span className="py-3 px-2">
+                                <X
+                                  className="cursor-pointer"
+                                  onClick={() =>
+                                    handleAction(
+                                      'delete',
+                                      option.trigger,
+                                      false
+                                    )
+                                  }
+                                />
+                              </span>
+                            </div>
+                          ))
                         : 'Geen options'}
                     </div>
                   </div>
@@ -579,7 +689,7 @@ export default function WidgetEnqueteItems(
                 <div>
                   <Heading size="xl">Enquete items</Heading>
                   <Separator className="my-4" />
-                  <div className="w-full lg:w-2/3 flex flex-col gap-y-2">
+                  <div className="w-full lg:w-2/3 flex flex-col grid gap-y-4">
                     <FormField
                       control={form.control}
                       name="trigger"
@@ -601,21 +711,27 @@ export default function WidgetEnqueteItems(
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="fieldKey"
-                      render={({ field }) => (
+                    {form.watch('questionType') !== 'none' && (
+                      <FormField
+                        control={form.control}
+                        name="fieldKey"
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel>
                               Key voor het opslaan
                               <InfoDialog content={'Voor de volgende types zijn deze velden altijd veplicht: Titel, Samenvatting en Beschrijving'} />
-                              </FormLabel>
+                            </FormLabel>
                             <em className='text-xs'>Deze moet uniek zijn bijvoorbeeld: ‘samenvatting’</em>
                             <Input {...field} />
-                            <FormMessage/>
+                            {(!field.value || !isFieldKeyUnique) && (
+                              <FormMessage>
+                                {!field.value ? 'Key is verplicht' : 'Key moet uniek zijn'}
+                              </FormMessage>
+                            )}
                           </FormItem>
-                      )}
-                    />
+                        )}
+                      />
+                    )}
                     <FormField
                       control={form.control}
                       name="description"
@@ -627,6 +743,21 @@ export default function WidgetEnqueteItems(
                         </FormItem>
                       )}
                     />
+
+                    {form.watch('questionType') === 'open' && (
+
+                      <FormField
+                        control={form.control}
+                        name="placeholder"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Placeholder</FormLabel>
+                            <Input {...field} />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                     <FormField
                       control={form.control}
                       name="questionType"
@@ -643,10 +774,10 @@ export default function WidgetEnqueteItems(
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="none">
-                                Geen antwoordopties
+                                Informatie blok
                               </SelectItem>
                               <SelectItem value="images">
-                                Twee antwoordopties met afbeeldingen
+                                Antwoordopties met afbeeldingen
                               </SelectItem>
                               <SelectItem value="multiplechoice">
                                 Multiplechoice
@@ -655,7 +786,9 @@ export default function WidgetEnqueteItems(
                               <SelectItem value="multiple">
                                 Meerkeuze
                               </SelectItem>
+                              <SelectItem value="map">Locatie</SelectItem>
                               <SelectItem value="scale">Schaal</SelectItem>
+                              <SelectItem value="imageUpload">Afbeelding upload</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -663,54 +796,202 @@ export default function WidgetEnqueteItems(
                       )}
                     />
                     {form.watch('questionType') === 'open' && (
-                        <>
-                          <FormField
-                              control={form.control}
-                              name="variant"
-                              render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Is het veld qua grootte 1 regel of een tekstvak?</FormLabel>
-                                    <Select
-                                        value={field.value || 'text input'}
-                                        onValueChange={field.onChange}>
-                                      <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Kies een optie" />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        <SelectItem value="text input">1 regel</SelectItem>
-                                        <SelectItem value="textarea">Tekstvak</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                              )}
-                          />
-                            <FormField
-                                control={form.control}
-                                name="minCharacters"
-                                render={({field}) => (
-                                    <FormItem>
-                                      <FormLabel>Minimaal aantal tekens</FormLabel>
-                                      <Input {...field} />
-                                      <FormMessage/>
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="maxCharacters"
-                                render={({field}) => (
-                                    <FormItem>
-                                      <FormLabel>Maximaal aantal tekens</FormLabel>
-                                      <Input {...field} />
-                                      <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </>
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="variant"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Is het veld qua grootte 1 regel of een tekstvak?</FormLabel>
+                              <Select
+                                value={field.value || 'text input'}
+                                onValueChange={field.onChange}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Kies een optie" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="text input">1 regel</SelectItem>
+                                  <SelectItem value="textarea">Tekstvak</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="minCharacters"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Minimaal aantal tekens</FormLabel>
+                              <Input {...field} />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="maxCharacters"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Maximaal aantal tekens</FormLabel>
+                              <Input {...field} />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </>
                     )}
+
+                    {form.watch('questionType') === 'none' && (
+                      <>
+                        <ImageUploader
+                          form={form}
+                          project={project as string}
+                          fieldName="imageUpload"
+                          imageLabel="Afbeelding 1"
+                          allowedTypes={["image/*"]}
+                          onImageUploaded={(imageResult) => {
+                            const image = imageResult ? imageResult.url : '';
+
+                            form.setValue("image", image);
+                            form.resetField('imageUpload');
+                          }}
+                        />
+
+                        {!!form.getValues('image') && (
+                          <div style={{ position: 'relative' }}>
+                            <img src={form.getValues('image')} />
+                          </div>
+                        )}
+
+                        <FormField
+                          control={form.control}
+                          name="imageAlt"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Afbeelding beschrijving voor screenreaders</FormLabel>
+                              <Input {...field} />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="imageDescription"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Beschrijving afbeelding</FormLabel>
+                              <Input {...field} />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                      </>
+                    )}
+
+                    {form.watch('questionType') === 'imageUpload' && (
+                      <FormField
+                        control={form.control}
+                        name="multiple"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Mogen er meerdere afbeeldingen tegelijkertijd geüpload worden?</FormLabel>
+                            <Select
+                              onValueChange={(e: string) => field.onChange(e === 'true')}
+                              value={field.value ? 'true' : 'false'}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Kies een optie" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="true">Ja</SelectItem>
+                                <SelectItem value="false">Nee</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    <FormField
+                      control={form.control}
+                      name="fieldRequired"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Is dit veld verplicht?
+                          </FormLabel>
+                          <Select
+                            onValueChange={(e: string) => field.onChange(e === 'true')}
+                            value={field.value ? 'true' : 'false'}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Kies een optie" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="false">Nee</SelectItem>
+                              <SelectItem value="true">Ja</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {form.watch('questionType') === 'scale' && (
+                      <FormField
+                        control={form.control}
+                        name="showSmileys"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              Wil je smileys tonen in plaats van een schaal?
+                            </FormLabel>
+                            <FormDescription>
+                              De schaal toont normaal gesproken een getal van 1 tot 5. Als je smileys wilt tonen, kies dan voor ja.
+                            </FormDescription>
+                            <Select
+                              onValueChange={(e: string) => field.onChange(e === 'true')}
+                              value={field.value ? 'true' : 'false'}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Kies een optie" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="false">Nee</SelectItem>
+                                <SelectItem value="true">Ja</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {form.watch('questionType') === 'open' && (
+                      <FormField
+                        control={form.control}
+                        name="defaultValue"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Standaard ingevulde waarde</FormLabel>
+                            <Input {...field} />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
                     {hasOptions() && (
                       <FormItem>
                         <Button
@@ -724,29 +1005,39 @@ export default function WidgetEnqueteItems(
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  {selectedItem && (
+
+                <div>
+                  <div className="flex gap-2">
+                    {selectedItem && (
+                      <Button
+                        className="w-fit mt-4 bg-secondary text-black hover:text-white"
+                        type="button"
+                        onClick={() => {
+                          resetForm();
+                        }}>
+                        Annuleer
+                      </Button>
+                    )}
+
                     <Button
-                      className="w-fit mt-4 bg-secondary text-black hover:text-white"
-                      type="button"
-                      onClick={() => {
-                        resetForm();
-                      }}>
-                      Annuleer
+                      className="w-fit mt-4"
+                      type="submit"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onSubmit(form.getValues())
+                      }}
+                      disabled={(!form.watch('fieldKey') || !isFieldKeyUnique) && form.watch('questionType') !== 'none'}
+                    >
+                      {selectedItem
+                        ? 'Sla wijzigingen op'
+                        : 'Voeg item toe aan lijst'}
                     </Button>
+                  </div>
+                  {(!form.watch('fieldKey') || !isFieldKeyUnique) && (
+                    <FormMessage>
+                      {!form.watch('fieldKey') ? 'Key is verplicht' : 'Key moet uniek zijn'}
+                    </FormMessage>
                   )}
-                  <Button
-                    className="w-fit mt-4"
-                    type="submit"
-                    onClick={ (e) => {
-                      e.preventDefault();
-                      onSubmit(form.getValues())
-                    }}
-                  >
-                    {selectedItem
-                      ? 'Sla wijzigingen op'
-                      : 'Voeg item toe aan lijst'}
-                  </Button>
                 </div>
               </div>
             )}

@@ -48,7 +48,7 @@ export default function WidgetDateCountdownBar({
   return (
     <div>
       <PageLayout
-        pageHeader="Project naam"
+        pageHeader="Projectnaam"
         breadcrumbs={[
           {
             name: 'Projecten',
@@ -59,7 +59,7 @@ export default function WidgetDateCountdownBar({
             url: `/projects/${projectId}/widgets`,
           },
           {
-            name: 'Date countdown bar',
+            name: 'Aftelbalk',
             url: `/projects/${projectId}/widgets/datecountdownbar/${id}`,
           },
         ]}>

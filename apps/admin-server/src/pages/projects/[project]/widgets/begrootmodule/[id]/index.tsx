@@ -7,6 +7,7 @@ import {
   TabsTrigger,
 } from '../../../../../../components/ui/tabs';
 import BegrootmoduleDisplay from './display';
+import BegrootmoduleText from './text';
 import BegrootmoduleExplanation from './explanation';
 import { useRouter } from 'next/router';
 import { useWidgetConfig } from '@/hooks/use-widget-config';
@@ -58,7 +59,7 @@ export default function WidgetBegrootModule({ apiUrl }: WithApiUrlProps) {
   return (
     <div>
       <PageLayout
-        pageHeader="Project naam"
+        pageHeader="Projectnaam"
         breadcrumbs={[
           {
             name: 'Projecten',
@@ -77,11 +78,12 @@ export default function WidgetBegrootModule({ apiUrl }: WithApiUrlProps) {
           <Tabs defaultValue="display">
             <TabsList className="w-full bg-white border-b-0 mb-4 rounded-md">
               <TabsTrigger value="display">Weergave opties</TabsTrigger>
+              <TabsTrigger value="text">Teksten</TabsTrigger>
               <TabsTrigger value="explanation">Uitleg</TabsTrigger>
               <TabsTrigger value="search">Zoeken</TabsTrigger>
               <TabsTrigger value="tags">Tags</TabsTrigger>
               <TabsTrigger value="sorting">Sorteer opties</TabsTrigger>
-              <TabsTrigger value="pagination">Pagination</TabsTrigger>
+              <TabsTrigger value="pagination">Paginering</TabsTrigger>
               <TabsTrigger value="include">Inclusief/exclusief</TabsTrigger>
               <TabsTrigger value="publish">Publiceren</TabsTrigger>
             </TabsList>
@@ -90,6 +92,9 @@ export default function WidgetBegrootModule({ apiUrl }: WithApiUrlProps) {
               <>
                 <TabsContent value="display" className="p-0">
                   <BegrootmoduleDisplay {...totalPropPackage} />
+                </TabsContent>
+                <TabsContent value="text" className="p-0">
+                  <BegrootmoduleText {...totalPropPackage} />
                 </TabsContent>
                 <TabsContent value="explanation" className="p-0">
                   <BegrootmoduleExplanation {...totalPropPackage} />

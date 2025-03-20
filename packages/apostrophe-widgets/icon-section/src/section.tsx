@@ -38,7 +38,7 @@ const renderCards = (items) => {
                 }
                 {item.href && (
                   <div>
-                    <Link href={item.href}>{item.linkText}</Link>
+                    <Link href={item.href} target={( typeof(item.target) !== "undefined" && item.target === false) ? '_self' : '_blank'}>{item.linkText}</Link>
                   </div>
                 )}
               </div>
@@ -57,12 +57,13 @@ function IconSection({ content, expandable, expandablelabel, expanded }: Item) {
     <section className="icon-section">
       {expandable === 'true' ? (
         <AccordionProvider
-        sections={[
-          {
-            body: <div className="icon-section-container" dangerouslySetInnerHTML={{ __html: renderedCards }} />,
-            expanded: expanded === 'true',
-            label: expandablelabel
-          }
+          sections={[
+            {
+              body: <div className="icon-section-container" dangerouslySetInnerHTML={{ __html: renderedCards }} />,
+              expanded: expanded === 'true',
+              headingLevel: 2,
+              label: expandablelabel,
+            }
         ]}
       />
       ) : (
